@@ -30,7 +30,7 @@ class Despesa(db.Model):
     valor = db.Column(db.Float, nullable=False)
     descricao = db.Column(db.String(200), nullable=False)
     categoria = db.Column(db.String(50), nullable=False)
-    periodicidade = db.Column(db.String(200), default='mensal') # diaria, semanal, mensal
+    periodicidade = db.Column(db.String(200), default='mensal')
     data = db.Column(db.Date, nullable=False)
 
 class InteracaoIA(db.Model):

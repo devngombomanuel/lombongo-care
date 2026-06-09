@@ -93,6 +93,21 @@
               <td class="text-success fw-bold">
                 +{{ "%.2f"|format(r.valor) }} Kz
               </td>
+              <td>
+                <form
+                  action="{{ url_for('dashboard.remover_transacao', tipo='receita', id=r.id) }}"
+                  method="POST"
+                  style="display: inline"
+                  onsubmit="return confirm('Apagar este registo?');"
+                >
+                  <button
+                    type="submit"
+                    class="btn btn-sm btn-link text-danger p-0"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
             </tr>
             {% endfor %} {% for d in data.despesas %}
             <tr>
@@ -101,6 +116,21 @@
               <td><span class="badge bg-dark">{{ d.categoria }}</span></td>
               <td class="text-danger fw-bold">
                 -{{ "%.2f"|format(d.valor) }} Kz
+              </td>
+              <td>
+                <form
+                  action="{{ url_for('dashboard.remover_transacao', tipo='despesa', id=d.id) }}"
+                  method="POST"
+                  style="display: inline"
+                  onsubmit="return confirm('Apagar este registo?');"
+                >
+                  <button
+                    type="submit"
+                    class="btn btn-sm btn-link text-danger p-0"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
               </td>
             </tr>
             {% endfor %}

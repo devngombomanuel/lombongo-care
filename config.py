@@ -9,6 +9,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     PERMANENT_SESSION_LIFETIME = timedelta(days=7)
     
-    # IA Config (Gemini ou OpenAI)
-    AI_API_KEY = os.environ.get('AI_API_KEY', 'SUA_API_KEY_AQUI')
-    AI_API_URL = os.environ.get('AI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent')
+
+    AI_API_KEY = 'AQ.Ab8RN6KseRu0zwqQ9NZi7uj03mor6WHsbNJIf9hy59OYWgVcxQ'
+
+    AI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent'

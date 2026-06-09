@@ -1,6 +1,5 @@
-# Colocar no topo ou em ficheiro apropriado de inicialização de dados
-from app.database import login_manager
-from app.repositories.user_repository import UserRepository
+from app.models import User
+from app.database import db, login_manager
 
 @login_manager.user_loader
 def load_user(user_id):

@@ -1,13 +1,16 @@
 {% extends 'base.html' %} {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2 class="fw-bold">Bem-vindo, {{ current_user.nome }} 👋</h2>
-  <a href="{{ url_for('dashboard.transacoes') }}" class="btn btn-primary-yellow"
-    ><i class="bi bi-plus-circle me-1"></i> Nova Transação</a
+  <a
+    href="{{ url_for('dashboard.transacoes') }}"
+    class="btn btn-primary-yellow"
   >
+    <i class="bi bi-plus-circle me-1"></i> Nova Transação
+  </a>
 </div>
 
 <div class="row g-3 mb-4">
-  <div class="col-10 col-sm-4">
+  <div class="col-12 col-sm-4">
     <div class="card p-3 border-custom bg-light">
       <div class="text-muted small uppercase fw-bold">Receitas Totais</div>
       <div class="fs-3 fw-bold text-success">
@@ -15,7 +18,7 @@
       </div>
     </div>
   </div>
-  <div class="col-10 col-sm-4">
+  <div class="col-12 col-sm-4">
     <div class="card p-3 border-custom bg-light">
       <div class="text-muted small uppercase fw-bold">Despesas Totais</div>
       <div class="fs-3 fw-bold text-danger">
@@ -23,7 +26,7 @@
       </div>
     </div>
   </div>
-  <div class="col-10 col-sm-4">
+  <div class="col-12 col-sm-4">
     <div class="card p-3 border-custom bg-primary-yellow">
       <div class="small uppercase fw-bold">Saldo Atual</div>
       <div class="fs-3 fw-bold">{{ "%.2f"|format(data.saldo_atual) }} Kz</div>
@@ -42,7 +45,7 @@
   <div class="col-12 col-lg-4">
     <div
       class="card border-custom shadow-sm d-flex flex-column"
-      style="height: 380px"
+      style="height: 410px"
     >
       <div
         class="card-header bg-dark text-white p-3 fw-bold d-flex align-items-center"
@@ -50,17 +53,28 @@
         <i class="bi bi-cpu me-2 text-warning"></i> Assistente Inteligente
         Lombongo
       </div>
+
       <div
         class="card-body overflow-auto flex-grow-1 p-3"
         id="chat-box"
         style="background-color: #fafafa"
       >
         <div class="mb-2 text-muted small text-center">
-          Peça conselhos, planos de poupança ou análises do seu saldo.
+          Peça conselhos, planos de poupança ou análises do seu saldo por texto
+          ou voz.
         </div>
       </div>
+
       <div class="p-2 border-top bg-white">
         <div class="input-group">
+          <button
+            class="btn btn-outline-secondary"
+            id="btn-microfone"
+            type="button"
+            title="Falar com a IA"
+          >
+            <i class="bi bi-mic-fill"></i>
+          </button>
           <input
             type="text"
             id="chat-input"
@@ -75,6 +89,18 @@
             <i class="bi bi-send"></i>
           </button>
         </div>
+
+        <div class="form-check form-switch mt-2 ms-1">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            id="switch-voz"
+            checked
+          />
+          <label class="form-check-label small text-muted" for="switch-voz"
+            >Ouvir resposta da IA (Voz)</label
+          >
+        </div>
       </div>
     </div>
   </div>
@@ -82,8 +108,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Carregar Gráfico Chart.js via API assíncrona do Flask Controller
   document.addEventListener("DOMContentLoaded", function () {
+    // 1. Carregar Gráfico Chart.js via API assíncrona do Flask Controller
     axios.get("/api/dados-graficos").then((response) => {
       const data = response.data;
       if (data.categorias.length === 0) return;
@@ -109,53 +135,112 @@
       });
     });
 
-    // Carregar histórico inicial do Chat da IA
     const chatBox = document.getElementById("chat-box");
+    const chatInput = document.getElementById("chat-input");
+    const btnMicrofone = document.getElementById("btn-microfone");
+    const switchVoz = document.getElementById("switch-voz");
+
+    // 2. Carregar histórico inicial do Chat da IA (sem disparar a voz do histórico)
     axios.get("/api/ai/historico").then((res) => {
       res.data.forEach((item) => {
-        appendMsg(item.mensagem, "user");
-        appendMsg(item.resposta, "ia");
+        appendMsg(item.mensagem, "user", false);
+        appendMsg(item.resposta, "ia", false);
       });
     });
 
-    // Event Handler para Enviar Mensagem à IA
+    // 3. Event Handlers para Enviar Mensagem à IA
     document
       .getElementById("btn-enviar-ia")
       .addEventListener("click", enviarMensagemIa);
-    document
-      .getElementById("chat-input")
-      .addEventListener("keypress", function (e) {
-        if (e.key === "Enter") enviarMensagemIa();
-      });
+    chatInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") enviarMensagemIa();
+    });
 
     function enviarMensagemIa() {
-      const input = document.getElementById("chat-input");
-      const msg = input.value.trim();
+      const msg = chatInput.value.trim();
       if (!msg) return;
 
-      appendMsg(msg, "user");
-      input.value = "";
+      appendMsg(msg, "user", false);
+      chatInput.value = "";
 
       axios
         .post("/api/ai/pergunta", { mensagem: msg })
         .then((res) => {
-          appendMsg(res.data.resposta, "ia");
+          appendMsg(res.data.resposta, "ia", true); // Executa a leitura por voz para respostas novas
         })
         .catch(() => {
           appendMsg(
             "Ocorreu um erro na comunicação. Verifique a sua ligação.",
             "ia text-danger",
+            false,
           );
         });
     }
 
-    function appendMsg(text, sender) {
+    function appendMsg(text, sender, dispararVoz = false) {
       const div = document.createElement("div");
-      div.className = `mb-2 p-2 rounded-3 text-sm ${sender === "user" ? "bg-light text-end ms-auto" : "bg-warning-subtle text-start me-auto"}`;
+      div.className = `mb-2 p-2 rounded-3 text-sm ${sender.includes("user") ? "bg-light text-end ms-auto" : "bg-warning-subtle text-start me-auto"}`;
       div.style.maxWidth = "85%";
-      div.innerHTML = `<strong>${sender === "user" ? "Você" : "LombongoIA"}:</strong><br>${text}`;
+      div.innerHTML = `<strong>${sender.includes("user") ? "Você" : "LombongoIA"}:</strong><br>${text}`;
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
+
+      // Dispara o sintetizador se for uma resposta nova da IA
+      if (dispararVoz && sender === "ia") {
+        falarTexto(text);
+      }
+    }
+
+    // 4. Funcionalidade: Entrada de Voz (Speech Recognition)
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "pt-PT";
+      recognition.interimResults = false;
+
+      btnMicrofone.addEventListener("click", () => {
+        btnMicrofone.classList.replace("btn-outline-secondary", "btn-danger");
+        try {
+          recognition.start();
+        } catch (e) {
+          console.log("O reconhecimento de voz já está ativo.");
+        }
+      });
+
+      recognition.onresult = (event) => {
+        const textoFalado = event.results[0][0].transcript;
+        chatInput.value = textoFalado;
+        btnMicrofone.classList.replace("btn-danger", "btn-outline-secondary");
+        enviarMensagemIa(); // Envia automaticamente após ditar!
+      };
+
+      recognition.onerror = () => {
+        btnMicrofone.classList.replace("btn-danger", "btn-outline-secondary");
+      };
+
+      recognition.onend = () => {
+        btnMicrofone.classList.replace("btn-danger", "btn-outline-secondary");
+      };
+    } else {
+      // Oculta o ícone se o navegador não suportar a API
+      btnMicrofone.style.display = "none";
+    }
+
+    // 5. Funcionalidade: Saída de Voz (Speech Synthesis)
+    function falarTexto(texto) {
+      if (!switchVoz.checked) return;
+
+      // Limpa marcadores Markdown comuns antes de falar
+      const textoLimpo = texto.replace(/[*#_\-`]/g, "");
+
+      // Cancela leituras anteriores em fila para evitar sobreposição
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(textoLimpo);
+      utterance.lang = "pt-PT";
+      utterance.rate = 1.15; // Velocidade ligeiramente acelerada para ritmo natural
+      window.speechSynthesis.speak(utterance);
     }
   });
 </script>
