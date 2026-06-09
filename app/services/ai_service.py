@@ -1,3 +1,7 @@
+from flask import current_app
+from google import genai 
+from app.services.financial_service import FinancialService
+from app.repositories.financial_repository import FinancialRepository
 class AIService:
     @staticmethod
     def generate_financial_advice(user_id, user_message=None):
@@ -27,29 +31,44 @@ class AIService:
             "Use termos cordiais. Responda em formato de texto limpo sem formatações markdown pesadas ou títulos.\n\n"
         )
         
-        # GARANTIA: A variável é explicitamente declarada aqui para o escopo da função
+
         if user_message:
             prompt_final = f"{prompt_base}{contexto}Pergunta do Utilizador: {user_message}"
         else:
             prompt_final = f"{prompt_base}{contexto}Gere uma análise rápida do meu estado atual e dê uma dica de ouro."
 
-        # 3. Chamar a API usando o modelo de produção atualizado
+       # 3. Chamar a API usando o modelo principal com Fallback automático para evitar erros 503
+        resposta_ia = ""
+        status_sucesso = False
+        
         try:
+            current_app.logger.info("A tentar comunicação com o modelo principal gemini-2.5-flash...")
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
-                contents=prompt_final, # Agora o Pylance já vai reconhecer a variável acima!
+                contents=prompt_final,
             )
-            
             if response.text:
                 resposta_ia = response.text
                 status_sucesso = True
-            else:
-                resposta_ia = "A IA processou o pedido, mas devolveu um texto vazio."
-                status_sucesso = False
                 
         except Exception as e:
-            resposta_ia = f"Erro na comunicação com o Gemini: {str(e)}"
-            status_sucesso = False
+            # Se o erro for sobrecarga (503), tentamos imediatamente o modelo alternativo
+            if "503" in str(e) or "UNAVAILABLE" in str(e).upper():
+                current_app.logger.warning("Gemini 2.5 sobrecarregado. A disparar modelo de reserva gemini-2.0-flash...")
+                try:
+                    response = client.models.generate_content(
+                        model='gemini-2.0-flash', # Modelo alternativo, geralmente mais estável em picos de tráfego
+                        contents=prompt_final,
+                    )
+                    if response.text:
+                        resposta_ia = response.text
+                        status_sucesso = True
+                except Exception as fallback_err:
+                    resposta_ia = f"Os servidores da IA encontram-se temporariamente congestionados em Luanda. Por favor, tente daqui a instantes."
+                    status_sucesso = False
+            else:
+                resposta_ia = f"Erro na comunicação com o motor da IA: {str(e)}"
+                status_sucesso = False
 
         # 4. Guardar no histórico em caso de sucesso
         if user_message and status_sucesso:
