@@ -6,6 +6,10 @@
   .btn-primary-yellow {
     transition: background-color 0.2s ease-in-out;
   }
+  /* Estilização suave para os modais do SweetAlert nesta página */
+  .swal2-popup {
+    border-radius: 12px !important;
+  }
 </style>
 {% endblock %} {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -21,6 +25,7 @@
   </a>
 </div>
 
+{# --- CARDS DE SINOPSES FINANCEIRAS --- #}
 <div class="row g-3 mb-4">
   <div class="col-12 col-sm-4">
     <div class="card p-3 border-custom bg-light">
@@ -46,18 +51,38 @@
   </div>
 </div>
 
+{# --- SEÇÃO PRINCIPAL DE GRÁFICOS E ASSISTENTE --- #}
 <div class="row g-4">
   <div class="col-12 col-lg-8">
-    <div class="card p-3 border-custom mb-4 shadow-sm">
-      <h5 class="fw-bold mb-3">Distribuição de Gastos por Categoria</h5>
-      <div style="height: 300px"><canvas id="categoryChart"></canvas></div>
+    <div class="row g-4">
+      {# 1. Gráfico de Rosca (Categorias) #}
+      <div class="col-12 col-md-6">
+        <div class="card p-3 border-custom h-100 shadow-sm">
+          <h5 class="fw-bold mb-3 small text-uppercase text-muted">
+            <i class="bi bi-pie-chart text-warning me-1"></i> Por Categoria
+          </h5>
+          <div style="height: 280px"><canvas id="categoryChart"></canvas></div>
+        </div>
+      </div>
+
+      {# 2. Gráfico de Barras Verticais (Balanço de Fluxo) #}
+      <div class="col-12 col-md-6">
+        <div class="card p-3 border-custom h-100 shadow-sm">
+          <h5 class="fw-bold mb-3 small text-uppercase text-muted">
+            <i class="bi bi-bar-chart-line text-warning me-1"></i> Balanço de
+            Fluxo
+          </h5>
+          <div style="height: 280px"><canvas id="barChart"></canvas></div>
+        </div>
+      </div>
     </div>
   </div>
 
+  {# --- CAIXA DO ASSISTENTE IA LOMBONGO --- #}
   <div class="col-12 col-lg-4">
     <div
       class="card border-custom shadow-sm d-flex flex-column"
-      style="height: 410px"
+      style="height: 360px"
     >
       <div
         class="card-header bg-dark text-white p-3 fw-bold d-flex align-items-center justify-content-between"
@@ -126,34 +151,87 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // 1. Carregar Gráfico Chart.js via API assíncrona do Flask Controller
+
+    // 1. Carregar Gráficos Chart.js via API assíncrona do Flask Controller
     axios.get("/api/dados-graficos").then((response) => {
       const data = response.data;
-      if (data.categorias.length === 0) return;
-      const ctx = document.getElementById("categoryChart").getContext("2d");
-      new Chart(ctx, {
-        type: "doughnut",
+
+      // Lógica do Gráfico de Rosca (Com Animação Avançada Corrigida)
+      if (data.categorias && data.categorias.length > 0) {
+        const ctxPie = document.getElementById("categoryChart").getContext("2d");
+        new Chart(ctxPie, {
+          type: "doughnut",
+          data: {
+            labels: data.categorias,
+            datasets: [
+              {
+                data: data.valores_categorias,
+                backgroundColor: ["#FFCC00", "#212529", "#6C757D", "#ADB5BD", "#DEE2E6"],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              duration: 2500,
+              easing: 'easeOutQuart',
+              animateRotate: true,
+              animateScale: true
+            }
+          },
+        });
+      }
+
+      // Lógica do Gráfico de Barras Verticais (Seguro contra dados nulos na carga do Jinja)
+      const ctxBar = document.getElementById("barChart").getContext("2d");
+      new Chart(ctxBar, {
+        type: "bar",
         data: {
-          labels: data.categorias,
+          labels: ["Balanço Geral"],
           datasets: [
             {
-              data: data.valores_categorias,
-              backgroundColor: [
-                "#FFCC00",
-                "#212529",
-                "#6C757D",
-                "#ADB5BD",
-                "#DEE2E6",
-              ],
+              label: "Entradas",
+              data: [{{ data.total_receitas|default(0) }}],
+              backgroundColor: "rgba(25, 135, 84, 0.85)",
+              borderColor: "#198754",
+              borderWidth: 1,
+              borderRadius: 5
             },
-          ],
+            {
+              label: "Saídas",
+              data: [{{ data.total_despesas|default(0) }}],
+              backgroundColor: "rgba(220, 53, 69, 0.85)",
+              borderColor: "#dc3545",
+              borderWidth: 1,
+              borderRadius: 5
+            }
+          ]
         },
-        options: { responsive: true, maintainAspectRatio: false },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "bottom" }
+          },
+          scales: {
+            y: { beginAtZero: true, grid: { color: "rgba(0, 0, 0, 0.05)" } },
+            x: { grid: { display: false } }
+          },
+          animation: {
+            duration: 2000,
+            easing: "easeOutQuart"
+          }
+        }
       });
-    });
+    }).catch((error) => {
+      console.error("Erro ao carregar dados dos gráficos:", error);
+    }); // CORRIGIDO: Fecho correto das chavetas e parênteses do Axios
 
     const chatBox = document.getElementById("chat-box");
     const chatInput = document.getElementById("chat-input");
@@ -162,46 +240,63 @@
     const btnLimparChat = document.getElementById("btn-limpar-chat");
     const avisoVazio = document.getElementById("chat-vazio-aviso");
 
-    // 2. Carregar histórico inicial do Chat da IA (sem disparar a voz do histórico)
+    // 2. Carregar histórico inicial do Chat da IA
     axios.get("/api/ai/historico").then((res) => {
-      if (res.data.length > 0 && avisoVazio) {
+      if (res.data && res.data.length > 0 && avisoVazio) {
         avisoVazio.style.display = "none";
       }
-      res.data.forEach((item) => {
-        appendMsg(item.mensagem, "user", false);
-        appendMsg(item.resposta, "ia", false);
+      if (res.data) {
+        res.data.forEach((item) => {
+          appendMsg(item.mensagem, "user", false);
+          appendMsg(item.resposta, "ia", false);
+        });
+      }
+    });
+
+    // 3. Limpar Histórico do Chat Customizado com SweetAlert2
+    btnLimparChat.addEventListener("click", function () {
+      Swal.fire({
+        title: "Apagar Histórico?",
+        text: "Tem a certeza que deseja apagar permanentemente todo o histórico de mensagens?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#FFCC00",
+        cancelButtonColor: "#212529",
+        confirmButtonText: '<span style="color: #212529; font-weight:600;">Sim, apagar!</span>',
+        cancelButtonText: "Cancelar",
+        background: "#ffffff",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          axios
+            .post("/api/ai/limpar-historico")
+            .then((res) => {
+              const mensagens = chatBox.querySelectorAll("div:not(#chat-vazio-aviso)");
+              mensagens.forEach((m) => m.remove());
+              if (avisoVazio) avisoVazio.style.display = "block";
+              window.speechSynthesis.cancel();
+
+              Swal.fire({
+                title: "Eliminado!",
+                text: "O seu histórico de conversas foi limpo.",
+                icon: "success",
+                confirmButtonColor: "#FFCC00",
+                confirmButtonText: '<span style="color: #212529; font-weight:600;">OK</span>',
+              });
+            })
+            .catch(() => {
+              Swal.fire({
+                title: "Erro!",
+                text: "Não foi possível apagar o histórico de interações. Verifique o servidor.",
+                icon: "error",
+                confirmButtonColor: "#212529",
+              });
+            });
+        }
       });
     });
 
-    // 3. Limpar Histórico do Chat no Servidor e no Ecrã
-    btnLimparChat.addEventListener("click", function () {
-      if (
-        confirm(
-          "Tem a certeza que deseja apagar permanentemente todo o histórico de mensagens?",
-        )
-      ) {
-        axios
-          .post("/api/ai/limpar-historico")
-          .then((res) => {
-            const mensagens = chatBox.querySelectorAll(
-              "div:not(#chat-vazio-aviso)",
-            );
-            mensagens.forEach((m) => m.remove());
-            if (avisoVazio) avisoVazio.style.display = "block";
-            window.speechSynthesis.cancel();
-          })
-          .catch(() => {
-            alert(
-              "Não foi possível apagar o histórico de interações. Verifique o servidor.",
-            );
-          });
-      }
-    });
-
     // 4. Event Handlers para Enviar Mensagem à IA
-    document
-      .getElementById("btn-enviar-ia")
-      .addEventListener("click", enviarMensagemIa);
+    document.getElementById("btn-enviar-ia").addEventListener("click", enviarMensagemIa);
     chatInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") enviarMensagemIa();
     });
@@ -220,11 +315,7 @@
           appendMsg(res.data.resposta, "ia", true);
         })
         .catch(() => {
-          appendMsg(
-            "Ocorreu um erro na comunicação. Verifique a sua ligação.",
-            "ia text-danger",
-            false,
-          );
+          appendMsg("Ocorreu um erro na comunicação. Verifique a sua ligação.", "ia text-danger", false);
         });
     }
 
@@ -242,8 +333,7 @@
     }
 
     // 5. Entrada de Voz - Configurada estritamente em Português de Portugal (pt-PT)
-    const SpeechRecognition =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.lang = "pt-PT";
@@ -278,7 +368,7 @@
       btnMicrofone.style.display = "none";
     }
 
-    // 6. Saída de Voz - Seleção ativa de sotaque em Português de Portugal (pt-PT)
+    // 6. Saída de Voz - Seleção ativa de sotaque corrigida globalmente (SpeechSynthesisUtterance)
     function falarTexto(texto) {
       if (!switchVoz.checked) return;
 
@@ -289,9 +379,7 @@
       utterance.lang = "pt-PT";
 
       const vozes = window.speechSynthesis.getVoices();
-      const vozPortugal = vozes.find(
-        (v) => v.lang === "pt-PT" || v.lang.includes("pt-PT"),
-      );
+      const vozPortugal = vozes.find((v) => v.lang === "pt-PT" || v.lang.includes("pt-PT"));
       if (vozPortugal) {
         utterance.voice = vozPortugal;
       }

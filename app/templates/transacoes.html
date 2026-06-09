@@ -1,12 +1,28 @@
 {% extends 'base.html' %} {% block styles %}
 <style>
-  .table hover tbody tr:hover {
+  .table-hover tbody tr:hover {
     background-color: rgba(255, 204, 0, 0.05);
+  }
+  /* Estilização para os modais do SweetAlert */
+  .swal2-popup {
+    border-radius: 12px !important;
+  }
+  /* Card financeiro customizado para visualização mobile */
+  .transacao-mobile-card {
+    border-left: 4px solid #dee2e6;
+    transition: transform 0.2s ease;
+  }
+  .transacao-mobile-card.receita-border {
+    border-left-color: #198754; /* Verde sucesso */
+  }
+  .transacao-mobile-card.despesa-border {
+    border-left-color: #dc3545; /* Vermelho perigo */
   }
 </style>
 {% endblock %} {% block content %}
 <div class="row g-4">
-  <div class="col-12 col-md-5">
+  {# --- FORMULÁRIO DE LANÇAMENTO --- #}
+  <div class="col-12 col-lg-5">
     <div class="card p-4 border-custom shadow-sm">
       <h4 class="fw-bold mb-3">
         <i class="bi bi-graph-up-arrow text-warning me-2"></i> Lançar Fluxo
@@ -55,9 +71,7 @@
           />
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold"
-            >Periodicidade (Para Despesas)</label
-          >
+          <label class="form-label fw-semibold">Periodicidade</label>
           <select name="periodicidade" class="form-select border-custom">
             <option value="diaria">Diária</option>
             <option value="semanal">Semanal</option>
@@ -80,13 +94,18 @@
     </div>
   </div>
 
-  <div class="col-12 col-md-7">
+  {# --- EXTRATO GERAL (HÍBRIDO COMPATÍVEL) --- #}
+  <div class="col-12 col-lg-7">
     <div class="card p-4 border-custom shadow-sm">
       <h4 class="fw-bold mb-3">
         <i class="bi bi-list-columns-reverse text-warning me-2"></i> Extrato
         Geral
       </h4>
-      <div class="table-responsive">
+
+      {# ================================================================= #} {#
+      1. VISUALIZAÇÃO DESKTOP: Oculta em telemóveis (d-none d-md-block) #} {#
+      ================================================================= #}
+      <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
           <thead>
             <tr class="table-light">
@@ -94,14 +113,14 @@
               <th>Descrição</th>
               <th>Categoria</th>
               <th>Valor</th>
-              <th></th>
+              <th class="text-end">Ação</th>
             </tr>
           </thead>
           <tbody>
             {% for r in data.receitas %}
             <tr>
               <td>{{ r.data }}</td>
-              <td>{{ r.descricao }}</td>
+              <td class="fw-semibold">{{ r.descricao }}</td>
               <td><span class="badge bg-secondary">{{ r.categoria }}</span></td>
               <td class="text-success fw-bold">
                 +{{ "%.2f"|format(r.valor) }} Kz
@@ -110,15 +129,14 @@
                 <form
                   action="{{ url_for('dashboard.remover_transacao', tipo='receita', id=r.id) }}"
                   method="POST"
-                  style="display: inline"
-                  onsubmit="return confirm('Apagar este registo?');"
+                  class="js-form-eliminar d-inline m-0 p-0"
                 >
                   <button
-                    type="submit"
-                    class="btn btn-sm btn-link text-danger p-0"
+                    type="button"
+                    class="btn btn-link text-danger p-0 js-btn-eliminar"
                     title="Eliminar registo"
                   >
-                    <i class="bi bi-trash-fill"></i>
+                    <i class="bi bi-trash3-fill fs-5"></i>
                   </button>
                 </form>
               </td>
@@ -126,7 +144,7 @@
             {% endfor %} {% for d in data.despesas %}
             <tr>
               <td>{{ d.data }}</td>
-              <td>{{ d.descricao }}</td>
+              <td class="fw-semibold">{{ d.descricao }}</td>
               <td><span class="badge bg-dark">{{ d.categoria }}</span></td>
               <td class="text-danger fw-bold">
                 -{{ "%.2f"|format(d.valor) }} Kz
@@ -135,15 +153,14 @@
                 <form
                   action="{{ url_for('dashboard.remover_transacao', tipo='despesa', id=d.id) }}"
                   method="POST"
-                  style="display: inline"
-                  onsubmit="return confirm('Apagar este registo?');"
+                  class="js-form-eliminar d-inline m-0 p-0"
                 >
                   <button
-                    type="submit"
-                    class="btn btn-sm btn-link text-danger p-0"
+                    type="button"
+                    class="btn btn-link text-danger p-0 js-btn-eliminar"
                     title="Eliminar registo"
                   >
-                    <i class="bi bi-trash-fill"></i>
+                    <i class="bi bi-trash3-fill fs-5"></i>
                   </button>
                 </form>
               </td>
@@ -152,7 +169,122 @@
           </tbody>
         </table>
       </div>
+
+      {# ================================================================= #} {#
+      2. VISUALIZAÇÃO MOBILE: Oculta no PC, brilha no telemóvel (d-md-none) #}
+      {# ================================================================= #}
+      <div class="d-block d-md-none" id="extrato-mobile">
+        {# --- Cards de Receitas --- #} {% for r in data.receitas %}
+        <div
+          class="card p-3 mb-2 border-custom transacao-mobile-card receita-border shadow-sm bg-white"
+        >
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="small text-muted mb-1">
+                <i class="bi bi-calendar3"></i> {{ r.data }}
+              </div>
+              <h6 class="fw-bold mb-1 text-dark">{{ r.descricao }}</h6>
+              <span class="badge bg-secondary" style="font-size: 0.7rem"
+                >{{ r.categoria }}</span
+              >
+            </div>
+            <div class="text-end">
+              <div class="text-success fw-bold mb-2">
+                +{{ "%.2f"|format(r.valor) }} Kz
+              </div>
+              <form
+                action="{{ url_for('dashboard.remover_transacao', tipo='receita', id=r.id) }}"
+                method="POST"
+                class="js-form-eliminar m-0 p-0"
+              >
+                <button
+                  type="button"
+                  class="btn btn-sm btn-light text-danger border border-danger-subtle rounded-3 px-2 py-1 js-btn-eliminar"
+                >
+                  <i class="bi bi-trash3-fill me-1"></i> Apagar
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %} {# --- Cards de Despesas --- #} {% for d in data.despesas
+        %}
+        <div
+          class="card p-3 mb-2 border-custom transacao-mobile-card despesa-border shadow-sm bg-white"
+        >
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="small text-muted mb-1">
+                <i class="bi bi-calendar3"></i> {{ d.data }}
+              </div>
+              <h6 class="fw-bold mb-1 text-dark">{{ d.descricao }}</h6>
+              <span class="badge bg-dark" style="font-size: 0.7rem"
+                >{{ d.categoria }}</span
+              >
+            </div>
+            <div class="text-end">
+              <div class="text-danger fw-bold mb-2">
+                -{{ "%.2f"|format(d.valor) }} Kz
+              </div>
+              <form
+                action="{{ url_for('dashboard.remover_transacao', tipo='despesa', id=d.id) }}"
+                method="POST"
+                class="js-form-eliminar m-0 p-0"
+              >
+                <button
+                  type="button"
+                  class="btn btn-sm btn-light text-danger border border-danger-subtle rounded-3 px-2 py-1 js-btn-eliminar"
+                >
+                  <i class="bi bi-trash3-fill me-1"></i> Apagar
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %} {% if not data.receitas and not data.despesas %}
+        <div class="text-center text-muted small py-4">
+          Nenhum fluxo financeiro lançado até ao momento.
+        </div>
+        {% endif %}
+      </div>
     </div>
   </div>
 </div>
+
+{# --- MOTOR SWEETALERT2 --- #}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Escuta cliques em ambas as estruturas (Tabela PC e Cards Mobile)
+    document.body.addEventListener("click", function (e) {
+      // Verifica se o clique ocorreu no botão ou dentro do ícone do botão
+      const botao = e.target.closest(".js-btn-eliminar");
+
+      if (botao) {
+        e.preventDefault();
+        const formularioPai = botao.closest(".js-form-eliminar");
+
+        Swal.fire({
+          title: "Remover Registo?",
+          text: "Esta acção apagará permanentemente o movimento do seu histórico financeiro.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#FFCC00",
+          cancelButtonColor: "#212529",
+          confirmButtonText:
+            '<span style="color: #212529; font-weight:600;">Sim, eliminar</span>',
+          cancelButtonText: "Cancelar",
+          background: "#ffffff",
+          customClass: {
+            popup: "border-0 shadow",
+          },
+        }).then((result) => {
+          if (result.isConfirmed) {
+            formularioPai.submit();
+          }
+        });
+      }
+    });
+  });
+</script>
 {% endblock %}
