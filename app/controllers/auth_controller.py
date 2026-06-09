@@ -16,7 +16,7 @@ def register():
         user, message = AuthService.register_user(nome, email, password)
         if user:
             flash(message, 'success')
-            return redirect(url_for('auth.login'))  # <-- LINHA 19 CORRIGIDA AQUI
+            return redirect(url_for('auth.login'))
         flash(message, 'danger')
     return render_template('register.html')
 

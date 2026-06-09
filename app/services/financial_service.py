@@ -11,7 +11,7 @@ class FinancialService:
         total_despesas = sum(d.valor for d in despesas)
         saldo_atual = total_receitas - total_despesas
 
-        # Agrupamento por Categoria para Gráficos
+
         gastos_por_categoria = {}
         for d in despesas:
             gastos_por_categoria[d.categoria] = gastos_por_categoria.get(d.categoria, 0) + d.valor

@@ -6,7 +6,6 @@
   .btn-primary-yellow {
     transition: background-color 0.2s ease-in-out;
   }
-  /* Estilização suave para os modais do SweetAlert nesta página */
   .swal2-popup {
     border-radius: 12px !important;
   }
@@ -156,12 +155,9 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-
-    // 1. Carregar Gráficos Chart.js via API assíncrona do Flask Controller
     axios.get("/api/dados-graficos").then((response) => {
       const data = response.data;
 
-      // Lógica do Gráfico de Rosca (Com Animação Avançada Corrigida)
       if (data.categorias && data.categorias.length > 0) {
         const ctxPie = document.getElementById("categoryChart").getContext("2d");
         new Chart(ctxPie, {
@@ -188,7 +184,7 @@
         });
       }
 
-      // Lógica do Gráfico de Barras Verticais (Seguro contra dados nulos na carga do Jinja)
+
       const ctxBar = document.getElementById("barChart").getContext("2d");
       new Chart(ctxBar, {
         type: "bar",
@@ -231,7 +227,7 @@
       });
     }).catch((error) => {
       console.error("Erro ao carregar dados dos gráficos:", error);
-    }); // CORRIGIDO: Fecho correto das chavetas e parênteses do Axios
+    });
 
     const chatBox = document.getElementById("chat-box");
     const chatInput = document.getElementById("chat-input");
@@ -240,7 +236,7 @@
     const btnLimparChat = document.getElementById("btn-limpar-chat");
     const avisoVazio = document.getElementById("chat-vazio-aviso");
 
-    // 2. Carregar histórico inicial do Chat da IA
+
     axios.get("/api/ai/historico").then((res) => {
       if (res.data && res.data.length > 0 && avisoVazio) {
         avisoVazio.style.display = "none";
@@ -253,7 +249,6 @@
       }
     });
 
-    // 3. Limpar Histórico do Chat Customizado com SweetAlert2
     btnLimparChat.addEventListener("click", function () {
       Swal.fire({
         title: "Apagar Histórico?",
@@ -295,7 +290,6 @@
       });
     });
 
-    // 4. Event Handlers para Enviar Mensagem à IA
     document.getElementById("btn-enviar-ia").addEventListener("click", enviarMensagemIa);
     chatInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") enviarMensagemIa();
@@ -332,7 +326,6 @@
       }
     }
 
-    // 5. Entrada de Voz - Configurada estritamente em Português de Portugal (pt-PT)
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -368,7 +361,7 @@
       btnMicrofone.style.display = "none";
     }
 
-    // 6. Saída de Voz - Seleção ativa de sotaque corrigida globalmente (SpeechSynthesisUtterance)
+
     function falarTexto(texto) {
       if (!switchVoz.checked) return;
 

@@ -9,14 +9,12 @@ class AIService:
         
         if not api_key:
             return "Olá! O motor da IA está montado, mas a configuração da AI_API_KEY não foi encontrada."
-
-        # 1. Inicializar o cliente oficial da Google usando a tua chave
         try:
             client = genai.Client(api_key=api_key)
         except Exception as e:
             return f"Erro ao inicializar o motor da IA: {str(e)[:50]}"
-
-        # 2. Recolher dados financeiros do utilizador
+        
+        
         data = FinancialService.get_dashboard_data(user_id)
         
         contexto = f"Contexto Financeiro do Utilizador:\n"
@@ -37,7 +35,6 @@ class AIService:
         else:
             prompt_final = f"{prompt_base}{contexto}Gere uma análise rápida do meu estado atual e dê uma dica de ouro."
 
-       # 3. Chamar a API usando o modelo principal com Fallback automático para evitar erros 503
         resposta_ia = ""
         status_sucesso = False
         
@@ -52,12 +49,11 @@ class AIService:
                 status_sucesso = True
                 
         except Exception as e:
-            # Se o erro for sobrecarga (503), tentamos imediatamente o modelo alternativo
             if "503" in str(e) or "UNAVAILABLE" in str(e).upper():
                 current_app.logger.warning("Gemini 2.5 sobrecarregado. A disparar modelo de reserva gemini-2.0-flash...")
                 try:
                     response = client.models.generate_content(
-                        model='gemini-2.0-flash', # Modelo alternativo, geralmente mais estável em picos de tráfego
+                        model='gemini-2.0-flash',
                         contents=prompt_final,
                     )
                     if response.text:
@@ -69,8 +65,7 @@ class AIService:
             else:
                 resposta_ia = f"Erro na comunicação com o motor da IA: {str(e)}"
                 status_sucesso = False
-
-        # 4. Guardar no histórico em caso de sucesso
+                
         if user_message and status_sucesso:
             try:
                 FinancialRepository.save_ia_interaction(user_id, user_message, resposta_ia)

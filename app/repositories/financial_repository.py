@@ -2,7 +2,6 @@ from app.models import Receita, Despesa, InteracaoIA
 from app.database import db
 
 class FinancialRepository:
-    # Receitas
     @staticmethod
     def get_receitas_by_user(user_id):
         return Receita.query.filter_by(user_id=user_id).order_by(Receita.data.desc()).all()
@@ -44,7 +43,7 @@ class FinancialRepository:
             return True
         return False
 
-    # IA Logs
+
     @staticmethod
     def save_ia_interaction(user_id, mensagem, resposta):
         interacao = InteracaoIA(user_id=user_id, mensagem=mensagem, resposta=resposta)

@@ -3,20 +3,20 @@
   .table-hover tbody tr:hover {
     background-color: rgba(255, 204, 0, 0.05);
   }
-  /* Estilização para os modais do SweetAlert */
+
   .swal2-popup {
     border-radius: 12px !important;
   }
-  /* Card financeiro customizado para visualização mobile */
+
   .transacao-mobile-card {
     border-left: 4px solid #dee2e6;
     transition: transform 0.2s ease;
   }
   .transacao-mobile-card.receita-border {
-    border-left-color: #198754; /* Verde sucesso */
+    border-left-color: #198754;
   }
   .transacao-mobile-card.despesa-border {
-    border-left-color: #dc3545; /* Vermelho perigo */
+    border-left-color: #dc3545;
   }
 </style>
 {% endblock %} {% block content %}
@@ -101,10 +101,6 @@
         <i class="bi bi-list-columns-reverse text-warning me-2"></i> Extrato
         Geral
       </h4>
-
-      {# ================================================================= #} {#
-      1. VISUALIZAÇÃO DESKTOP: Oculta em telemóveis (d-none d-md-block) #} {#
-      ================================================================= #}
       <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
           <thead>
@@ -170,9 +166,6 @@
         </table>
       </div>
 
-      {# ================================================================= #} {#
-      2. VISUALIZAÇÃO MOBILE: Oculta no PC, brilha no telemóvel (d-md-none) #}
-      {# ================================================================= #}
       <div class="d-block d-md-none" id="extrato-mobile">
         {# --- Cards de Receitas --- #} {% for r in data.receitas %}
         <div
@@ -255,9 +248,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Escuta cliques em ambas as estruturas (Tabela PC e Cards Mobile)
     document.body.addEventListener("click", function (e) {
-      // Verifica se o clique ocorreu no botão ou dentro do ícone do botão
       const botao = e.target.closest(".js-btn-eliminar");
 
       if (botao) {

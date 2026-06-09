@@ -47,7 +47,6 @@ def limpar_historico_ia():
     from app.models import InteracaoIA
     from app.database import db
     try:
-        # Apaga todas as interações da IA pertencentes ao utilizador logado
         InteracaoIA.query.filter_by(user_id=current_user.id).delete()
         db.session.commit()
         return jsonify({"status": "sucesso", "mensagem": "Histórico apagado com sucesso."})
