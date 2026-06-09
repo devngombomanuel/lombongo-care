@@ -35,4 +35,4 @@ def login():
 @auth_bp.route('/logout')
 def logout():
     AuthService.logout_user()
-    return redirect(url_url_for('auth.login'))
+    return redirect(url_for('auth.login'))

@@ -1,6 +1,18 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} {% block styles %}
+<style>
+  .uppercase {
+    text-transform: uppercase;
+  }
+  .btn-primary-yellow {
+    transition: background-color 0.2s ease-in-out;
+  }
+</style>
+{% endblock %} {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="fw-bold">Bem-vindo, {{ current_user.nome }} 👋</h2>
+  <h2 class="fw-bold">
+    Bem-vindo, {{ current_user.nome }}
+    <i class="bi bi-check-circle-fill text-success fs-3 ms-1"></i>
+  </h2>
   <a
     href="{{ url_for('dashboard.transacoes') }}"
     class="btn btn-primary-yellow"
@@ -48,10 +60,18 @@
       style="height: 410px"
     >
       <div
-        class="card-header bg-dark text-white p-3 fw-bold d-flex align-items-center"
+        class="card-header bg-dark text-white p-3 fw-bold d-flex align-items-center justify-content-between"
       >
-        <i class="bi bi-cpu me-2 text-warning"></i> Assistente Inteligente
-        Lombongo
+        <div class="d-flex align-items-center">
+          <i class="bi bi-cpu me-2 text-warning"></i> Assistente Lombongo
+        </div>
+        <button
+          class="btn btn-sm btn-outline-danger border-0 p-1 text-white"
+          id="btn-limpar-chat"
+          title="Apagar todo o histórico"
+        >
+          <i class="bi bi-trash-fill text-danger"></i> Limpar
+        </button>
       </div>
 
       <div
@@ -59,7 +79,7 @@
         id="chat-box"
         style="background-color: #fafafa"
       >
-        <div class="mb-2 text-muted small text-center">
+        <div class="mb-2 text-muted small text-center" id="chat-vazio-aviso">
           Peça conselhos, planos de poupança ou análises do seu saldo por texto
           ou voz.
         </div>
@@ -98,7 +118,7 @@
             checked
           />
           <label class="form-check-label small text-muted" for="switch-voz"
-            >Ouvir resposta da IA (Voz)</label
+            >Ouvir resposta da IA (Voz pt-PT)</label
           >
         </div>
       </div>
@@ -139,16 +159,46 @@
     const chatInput = document.getElementById("chat-input");
     const btnMicrofone = document.getElementById("btn-microfone");
     const switchVoz = document.getElementById("switch-voz");
+    const btnLimparChat = document.getElementById("btn-limpar-chat");
+    const avisoVazio = document.getElementById("chat-vazio-aviso");
 
     // 2. Carregar histórico inicial do Chat da IA (sem disparar a voz do histórico)
     axios.get("/api/ai/historico").then((res) => {
+      if (res.data.length > 0 && avisoVazio) {
+        avisoVazio.style.display = "none";
+      }
       res.data.forEach((item) => {
         appendMsg(item.mensagem, "user", false);
         appendMsg(item.resposta, "ia", false);
       });
     });
 
-    // 3. Event Handlers para Enviar Mensagem à IA
+    // 3. Limpar Histórico do Chat no Servidor e no Ecrã
+    btnLimparChat.addEventListener("click", function () {
+      if (
+        confirm(
+          "Tem a certeza que deseja apagar permanentemente todo o histórico de mensagens?",
+        )
+      ) {
+        axios
+          .post("/api/ai/limpar-historico")
+          .then((res) => {
+            const mensagens = chatBox.querySelectorAll(
+              "div:not(#chat-vazio-aviso)",
+            );
+            mensagens.forEach((m) => m.remove());
+            if (avisoVazio) avisoVazio.style.display = "block";
+            window.speechSynthesis.cancel();
+          })
+          .catch(() => {
+            alert(
+              "Não foi possível apagar o histórico de interações. Verifique o servidor.",
+            );
+          });
+      }
+    });
+
+    // 4. Event Handlers para Enviar Mensagem à IA
     document
       .getElementById("btn-enviar-ia")
       .addEventListener("click", enviarMensagemIa);
@@ -160,13 +210,14 @@
       const msg = chatInput.value.trim();
       if (!msg) return;
 
+      if (avisoVazio) avisoVazio.style.display = "none";
       appendMsg(msg, "user", false);
       chatInput.value = "";
 
       axios
         .post("/api/ai/pergunta", { mensagem: msg })
         .then((res) => {
-          appendMsg(res.data.resposta, "ia", true); // Executa a leitura por voz para respostas novas
+          appendMsg(res.data.resposta, "ia", true);
         })
         .catch(() => {
           appendMsg(
@@ -185,26 +236,27 @@
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // Dispara o sintetizador se for uma resposta nova da IA
       if (dispararVoz && sender === "ia") {
         falarTexto(text);
       }
     }
 
-    // 4. Funcionalidade: Entrada de Voz (Speech Recognition)
+    // 5. Entrada de Voz - Configurada estritamente em Português de Portugal (pt-PT)
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.lang = "pt-PT";
       recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
 
       btnMicrofone.addEventListener("click", () => {
         btnMicrofone.classList.replace("btn-outline-secondary", "btn-danger");
+        window.speechSynthesis.cancel();
         try {
           recognition.start();
         } catch (e) {
-          console.log("O reconhecimento de voz já está ativo.");
+          console.log("O reconhecimento de voz já se encontra ativo.");
         }
       });
 
@@ -212,7 +264,7 @@
         const textoFalado = event.results[0][0].transcript;
         chatInput.value = textoFalado;
         btnMicrofone.classList.replace("btn-danger", "btn-outline-secondary");
-        enviarMensagemIa(); // Envia automaticamente após ditar!
+        enviarMensagemIa();
       };
 
       recognition.onerror = () => {
@@ -223,24 +275,33 @@
         btnMicrofone.classList.replace("btn-danger", "btn-outline-secondary");
       };
     } else {
-      // Oculta o ícone se o navegador não suportar a API
       btnMicrofone.style.display = "none";
     }
 
-    // 5. Funcionalidade: Saída de Voz (Speech Synthesis)
+    // 6. Saída de Voz - Seleção ativa de sotaque em Português de Portugal (pt-PT)
     function falarTexto(texto) {
       if (!switchVoz.checked) return;
 
-      // Limpa marcadores Markdown comuns antes de falar
       const textoLimpo = texto.replace(/[*#_\-`]/g, "");
-
-      // Cancela leituras anteriores em fila para evitar sobreposição
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(textoLimpo);
       utterance.lang = "pt-PT";
-      utterance.rate = 1.15; // Velocidade ligeiramente acelerada para ritmo natural
+
+      const vozes = window.speechSynthesis.getVoices();
+      const vozPortugal = vozes.find(
+        (v) => v.lang === "pt-PT" || v.lang.includes("pt-PT"),
+      );
+      if (vozPortugal) {
+        utterance.voice = vozPortugal;
+      }
+
+      utterance.rate = 1.12;
       window.speechSynthesis.speak(utterance);
+    }
+
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => {};
     }
   });
 </script>

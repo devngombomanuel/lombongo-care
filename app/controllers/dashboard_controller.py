@@ -40,3 +40,17 @@ def remover_transacao(tipo, id):
     elif tipo == 'despesa':
         FinancialRepository.delete_despesa(id, current_user.id)
     return redirect(url_for('dashboard.transacoes'))
+
+@dashboard_bp.route('/api/ai/limpar-historico', methods=['POST'])
+@login_required
+def limpar_historico_ia():
+    from app.models import InteracaoIA
+    from app.database import db
+    try:
+        # Apaga todas as interações da IA pertencentes ao utilizador logado
+        InteracaoIA.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        return jsonify({"status": "sucesso", "mensagem": "Histórico apagado com sucesso."})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "erro", "mensagem": str(e)}), 500

@@ -1,0 +1,55 @@
+:root {
+  --lb-primary: #ffcc00;
+  --lb-bg: #ffffff;
+  --lb-dark: #212529;
+  --lb-light-gray: #f8f9fa;
+  --lb-border: #e9ecef;
+}
+
+body {
+  background-color: var(--lb-bg);
+  color: var(--lb-dark);
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.bg-primary-yellow {
+  background-color: var(--lb-primary) !important;
+  color: var(--lb-dark) !important;
+}
+
+.btn-primary-yellow {
+  background-color: var(--lb-primary);
+  color: var(--lb-dark);
+  border: none;
+  font-weight: 600;
+}
+
+.btn-primary-yellow:hover {
+  background-color: #e6b800;
+  color: var(--lb-dark);
+}
+
+.border-custom {
+  border-color: var(--lb-border) !important;
+}
+
+.sidebar {
+  background-color: var(--lb-light-gray);
+  min-height: 100vh;
+  border-right: 1px solid var(--lb-border);
+}
+
+.nav-link.active {
+  background-color: var(--lb-primary) !important;
+  color: var(--lb-dark) !important;
+  border-radius: 6px;
+}
+
+.nav-link {
+  color: var(--lb-dark);
+  font-weight: 500;
+  margin-bottom: 5px;
+}
