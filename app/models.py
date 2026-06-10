@@ -21,6 +21,7 @@ class Receita(db.Model):
     valor = db.Column(db.Float, nullable=False)
     descricao = db.Column(db.String(200), nullable=False)
     categoria = db.Column(db.String(50), nullable=False)
+    periodicidade = db.Column(db.String(50), nullable=False, default='unica')  # Adicionado para suportar fluxos únicos/recorrentes
     data = db.Column(db.Date, nullable=False)
 
 class Despesa(db.Model):
@@ -30,7 +31,7 @@ class Despesa(db.Model):
     valor = db.Column(db.Float, nullable=False)
     descricao = db.Column(db.String(200), nullable=False)
     categoria = db.Column(db.String(50), nullable=False)
-    periodicidade = db.Column(db.String(200), default='mensal')
+    periodicidade = db.Column(db.String(50), nullable=False, default='unica')  # Ajustado padrão para 'unica'
     data = db.Column(db.Date, nullable=False)
 
 class InteracaoIA(db.Model):
