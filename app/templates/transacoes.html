@@ -25,19 +25,19 @@
   <div class="col-12 col-lg-5">
     <div class="card p-4 border-custom shadow-sm">
       <h4 class="fw-bold mb-3">
-        <i class="bi bi-graph-up-arrow text-warning me-2"></i> Lançar Fluxo
-        Financeiro
+        <i class="bi bi-graph-up-arrow text-warning me-2"></i> Lançar Fluxo Financeiro
       </h4>
       <form method="POST" action="{{ url_for('dashboard.transacoes') }}">
         <div class="mb-3">
           <label class="form-label fw-semibold">Tipo de Movimento</label>
           <select
             name="tipo_transacao"
+            id="tipo_transacao"
             class="form-select border-custom"
             required
           >
             <option value="receita">Receita (Entrada)</option>
-            <option value="despesa">Despesa (Saída)</option>
+            <option value="despesa" selected>Despesa (Saída)</option>
           </select>
         </div>
         <div class="mb-3">
@@ -72,10 +72,11 @@
         </div>
         <div class="mb-3">
           <label class="form-label fw-semibold">Periodicidade</label>
-          <select name="periodicidade" class="form-select border-custom">
+          <select name="periodicidade" id="periodicidade" class="form-select border-custom" required>
+            <option value="unica" id="opt-unica" selected>Despesa única</option>
             <option value="diaria">Diária</option>
             <option value="semanal">Semanal</option>
-            <option value="mensal" selected>Mensal</option>
+            <option value="mensal">Mensal</option>
           </select>
         </div>
         <div class="mb-4">
@@ -98,8 +99,7 @@
   <div class="col-12 col-lg-7">
     <div class="card p-4 border-custom shadow-sm">
       <h4 class="fw-bold mb-3">
-        <i class="bi bi-list-columns-reverse text-warning me-2"></i> Extrato
-        Geral
+        <i class="bi bi-list-columns-reverse text-warning me-2"></i> Extrato Geral
       </h4>
       <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
@@ -108,6 +108,7 @@
               <th>Data</th>
               <th>Descrição</th>
               <th>Categoria</th>
+              <th>Periodicidade</th>
               <th>Valor</th>
               <th class="text-end">Ação</th>
             </tr>
@@ -118,6 +119,7 @@
               <td>{{ r.data }}</td>
               <td class="fw-semibold">{{ r.descricao }}</td>
               <td><span class="badge bg-secondary">{{ r.categoria }}</span></td>
+              <td><span class="badge bg-light text-dark border">{{ r.periodicidade|default('unica', true) }}</span></td>
               <td class="text-success fw-bold">
                 +{{ "%.2f"|format(r.valor) }} Kz
               </td>
@@ -142,6 +144,7 @@
               <td>{{ d.data }}</td>
               <td class="fw-semibold">{{ d.descricao }}</td>
               <td><span class="badge bg-dark">{{ d.categoria }}</span></td>
+              <td><span class="badge bg-light text-dark border">{{ d.periodicidade|default('unica', true) }}</span></td>
               <td class="text-danger fw-bold">
                 -{{ "%.2f"|format(d.valor) }} Kz
               </td>
@@ -174,7 +177,8 @@
           <div class="d-flex justify-content-between align-items-start">
             <div>
               <div class="small text-muted mb-1">
-                <i class="bi bi-calendar3"></i> {{ r.data }}
+                <i class="bi bi-calendar3"></i> {{ r.data }} 
+                <span class="ms-1 badge bg-light text-dark border" style="font-size: 0.65rem">{{ r.periodicidade|default('unica', true) }}</span>
               </div>
               <h6 class="fw-bold mb-1 text-dark">{{ r.descricao }}</h6>
               <span class="badge bg-secondary" style="font-size: 0.7rem"
@@ -184,7 +188,7 @@
             <div class="text-end">
               <div class="text-success fw-bold mb-2">
                 +{{ "%.2f"|format(r.valor) }} Kz
-              </div>
+              </td>
               <form
                 action="{{ url_for('dashboard.remover_transacao', tipo='receita', id=r.id) }}"
                 method="POST"
@@ -209,6 +213,7 @@
             <div>
               <div class="small text-muted mb-1">
                 <i class="bi bi-calendar3"></i> {{ d.data }}
+                <span class="ms-1 badge bg-light text-dark border" style="font-size: 0.65rem">{{ d.periodicidade|default('unica', true) }}</span>
               </div>
               <h6 class="fw-bold mb-1 text-dark">{{ d.descricao }}</h6>
               <span class="badge bg-dark" style="font-size: 0.7rem"
@@ -244,10 +249,27 @@
   </div>
 </div>
 
-{# --- MOTOR SWEETALERT2 --- #}
+{# --- MOTOR SWEETALERT2 E LÓGICA DE INTERFACE --- #}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    
+    // Lógica Dinâmica para Alternar Rótulo de Periodicidade Única
+    const tipoTransacao = document.getElementById("tipo_transacao");
+    const optUnica = document.getElementById("opt-unica");
+
+    function atualizarLabelUnica() {
+      if (tipoTransacao.value === "receita") {
+        optUnica.textContent = "Receita única";
+      } else {
+        optUnica.textContent = "Despesa única";
+      }
+    }
+
+    tipoTransacao.addEventListener("change", atualizarLabelUnica);
+    atualizarLabelUnica(); // Executa ao renderizar para alinhar com o valor por defeito
+
+    // Delegação de Eventos para Remoção com SweetAlert2
     document.body.addEventListener("click", function (e) {
       const botao = e.target.closest(".js-btn-eliminar");
 

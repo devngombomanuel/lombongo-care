@@ -15,6 +15,7 @@ def index():
 def transacoes():
     if request.method == 'POST':
         tipo = request.form.get('tipo_transacao') 
+        # O objeto request.form agora transporta automaticamente o novo input 'periodicidade' para o service
         if FinancialService.add_transaction(current_user.id, request.form, tipo):
             return redirect(url_for('dashboard.index')) 
     data = FinancialService.get_dashboard_data(current_user.id)
