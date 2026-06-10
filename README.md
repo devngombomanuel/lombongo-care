@@ -26,6 +26,7 @@ O objetivo do LombongoCare é permitir que qualquer utilizador:
 ## Funcionalidades
 
 ### Autenticação
+
 - Registo de utilizador
 - Login seguro
 - Hash de password
@@ -34,6 +35,7 @@ O objetivo do LombongoCare é permitir que qualquer utilizador:
 ---
 
 ### Gestão Financeira
+
 - Adicionar receitas
 - Adicionar despesas
 - Categorizar despesas
@@ -42,6 +44,7 @@ O objetivo do LombongoCare é permitir que qualquer utilizador:
 ---
 
 ### Dashboard Financeiro
+
 - Total de receitas
 - Total de despesas
 - Saldo atual
@@ -51,6 +54,7 @@ O objetivo do LombongoCare é permitir que qualquer utilizador:
 ---
 
 ### Gráficos
+
 - Gastos por categoria (Pie Chart)
 - Evolução de receitas vs despesas (Line Chart)
 - Fluxo financeiro mensal (Bar Chart)
@@ -58,6 +62,7 @@ O objetivo do LombongoCare é permitir que qualquer utilizador:
 ---
 
 ### Assistente Virtual (IA)
+
 Integração com API de inteligência artificial para:
 
 - Analisar padrões de consumo
@@ -71,6 +76,7 @@ Integração com API de inteligência artificial para:
 ## Stack Tecnológica
 
 ### Backend
+
 - Python 3.11+
 - Flask
 - Flask-SQLAlchemy
@@ -81,6 +87,7 @@ Integração com API de inteligência artificial para:
 ---
 
 ### Frontend
+
 - HTML5
 - Bootstrap 5
 - JavaScript
@@ -89,11 +96,13 @@ Integração com API de inteligência artificial para:
 ---
 
 ### Visualização de Dados
+
 - Chart.js
 
 ---
 
 ### Inteligência Artificial
+
 - API de LLM (OpenAI, Gemini ou equivalente)
 
 ---
@@ -106,41 +115,10 @@ Integração com API de inteligência artificial para:
 - Preto suave: textos e contrastes
 
 A interface foi pensada para ser:
+
 - Simples
 - Intuitiva
 - Moderna
 - Mobile-first
 
 ---
-
-## Estrutura do Projeto
-
-```text
-lombongocare/
-
-├── app/
-│   ├── models/
-│   ├── services/
-│   ├── repositories/
-│   ├── controllers/
-│   ├── integrations/
-│   │   └── ai_service.py
-│
-├── templates/
-│   ├── auth/
-│   ├── dashboard/
-│   ├── finance/
-│
-├── static/
-│   ├── css/
-│   ├── js/
-│   ├── img/
-│
-├── config/
-│   ├── config.py
-│
-├── migrations/
-├── app.py
-├── requirements.txt
-├── .env
-└── .gitignore
