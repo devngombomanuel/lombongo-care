@@ -108,13 +108,21 @@
           <i class="bi bi-list-columns-reverse text-warning me-2"></i> Extrato
           Geral
         </h4>
-        <a
-          href="{{ url_for('dashboard.exportar_extrato_pdf') }}"
-          class="btn btn-dark btn-sm"
-          style="border-left: 3px solid #ffcc00"
-        >
-          <i class="bi bi-file-earmark-pdf-fill text-warning me-1"></i> PDF
-        </a>
+        <div class="d-flex gap-2">
+          <a
+            href="{{ url_for('dashboard.index') }}"
+            class="btn btn-light btn-sm border"
+          >
+            <i class="bi bi-arrow-left me-1"></i> Voltar Para o Painel
+          </a>
+          <a
+            href="{{ url_for('dashboard.exportar_extrato_pdf') }}"
+            class="btn btn-dark btn-sm"
+            style="border-left: 3px solid #ffcc00"
+          >
+            <i class="bi bi-file-earmark-pdf-fill text-warning me-1"></i> PDF
+          </a>
+        </div>
       </div>
 
       <div class="table-responsive d-none d-md-block">
