@@ -24,7 +24,6 @@
   </a>
 </div>
 
-{# --- CARDS DE SINOPSES FINANCEIRAS --- #}
 <div class="row g-3 mb-4">
   <div class="col-12 col-sm-4">
     <div class="card p-3 border-custom bg-light">
@@ -50,11 +49,9 @@
   </div>
 </div>
 
-{# --- SEÇÃO PRINCIPAL DE GRÁFICOS E ASSISTENTE --- #}
 <div class="row g-4">
   <div class="col-12 col-lg-8">
     <div class="row g-4">
-      {# 1. Gráfico de Rosca (Categorias) #}
       <div class="col-12 col-md-6">
         <div class="card p-3 border-custom h-100 shadow-sm">
           <h5 class="fw-bold mb-3 small text-uppercase text-muted">
@@ -64,7 +61,6 @@
         </div>
       </div>
 
-      {# 2. Gráfico de Barras Verticais (Balanço de Fluxo) #}
       <div class="col-12 col-md-6">
         <div class="card p-3 border-custom h-100 shadow-sm">
           <h5 class="fw-bold mb-3 small text-uppercase text-muted">
@@ -77,7 +73,6 @@
     </div>
   </div>
 
-  {# --- CAIXA DO ASSISTENTE IA LOMBONGO --- #}
   <div class="col-12 col-lg-4">
     <div
       class="card border-custom shadow-sm d-flex flex-column"
@@ -135,12 +130,7 @@
         </div>
 
         <div class="form-check form-switch mt-2 ms-1">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            id="switch-voz"
-            checked
-          />
+          <input class="form-check-input" type="checkbox" id="switch-voz" />
           <label class="form-check-label small text-muted" for="switch-voz"
             >Ouvir resposta da IA (Voz pt-PT)</label
           >
@@ -155,87 +145,107 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    axios.get("/api/dados-graficos").then((response) => {
-      const data = response.data;
+    const switchVoz = document.getElementById("switch-voz");
+    const estadoVozSalvo = localStorage.getItem("lombongo_voz_ativa");
 
-      if (data.categorias && data.categorias.length > 0) {
-        const ctxPie = document.getElementById("categoryChart").getContext("2d");
-        new Chart(ctxPie, {
-          type: "doughnut",
+    switchVoz.checked = estadoVozSalvo !== "false";
+
+    switchVoz.addEventListener("change", function () {
+      localStorage.setItem("lombongo_voz_ativa", switchVoz.checked);
+      if (!switchVoz.checked) {
+        window.speechSynthesis.cancel();
+      }
+    });
+
+    axios
+      .get("/api/dados-graficos")
+      .then((response) => {
+        const data = response.data;
+
+        if (data.categorias && data.categorias.length > 0) {
+          const ctxPie = document
+            .getElementById("categoryChart")
+            .getContext("2d");
+          new Chart(ctxPie, {
+            type: "doughnut",
+            data: {
+              labels: data.categorias,
+              datasets: [
+                {
+                  data: data.valores_categorias,
+                  backgroundColor: [
+                    "#FFCC00",
+                    "#212529",
+                    "#6C757D",
+                    "#ADB5BD",
+                    "#DEE2E6",
+                  ],
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: {
+                duration: 2500,
+                easing: "easeOutQuart",
+                animateRotate: true,
+                animateScale: true,
+              },
+            },
+          });
+        }
+
+        const ctxBar = document.getElementById("barChart").getContext("2d");
+        new Chart(ctxBar, {
+          type: "bar",
           data: {
-            labels: data.categorias,
+            labels: ["Balanço Geral"],
             datasets: [
               {
-                data: data.valores_categorias,
-                backgroundColor: ["#FFCC00", "#212529", "#6C757D", "#ADB5BD", "#DEE2E6"],
+                label: "Entradas",
+                data: [parseFloat("{{ data.total_receitas|default(0) }}")],
+                backgroundColor: "rgba(25, 135, 84, 0.85)",
+                borderColor: "#198754",
+                borderWidth: 1,
+                borderRadius: 5,
+              },
+              {
+                label: "Saídas",
+                data: [parseFloat("{{ data.total_despesas|default(0) }}")],
+                backgroundColor: "rgba(220, 53, 69, 0.85)",
+                borderColor: "#dc3545",
+                borderWidth: 1,
+                borderRadius: 5,
               },
             ],
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            plugins: {
+              legend: { position: "bottom" },
+            },
+            scales: {
+              y: { beginAtZero: true, grid: { color: "rgba(0, 0, 0, 0.05)" } },
+              x: { grid: { display: false } },
+            },
             animation: {
-              duration: 2500,
-              easing: 'easeOutQuart',
-              animateRotate: true,
-              animateScale: true
-            }
+              duration: 2000,
+              easing: "easeOutQuart",
+            },
           },
         });
-      }
-
-
-      const ctxBar = document.getElementById("barChart").getContext("2d");
-      new Chart(ctxBar, {
-        type: "bar",
-        data: {
-          labels: ["Balanço Geral"],
-          datasets: [
-            {
-              label: "Entradas",
-              data: [{{ data.total_receitas|default(0) }}],
-              backgroundColor: "rgba(25, 135, 84, 0.85)",
-              borderColor: "#198754",
-              borderWidth: 1,
-              borderRadius: 5
-            },
-            {
-              label: "Saídas",
-              data: [{{ data.total_despesas|default(0) }}],
-              backgroundColor: "rgba(220, 53, 69, 0.85)",
-              borderColor: "#dc3545",
-              borderWidth: 1,
-              borderRadius: 5
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { position: "bottom" }
-          },
-          scales: {
-            y: { beginAtZero: true, grid: { color: "rgba(0, 0, 0, 0.05)" } },
-            x: { grid: { display: false } }
-          },
-          animation: {
-            duration: 2000,
-            easing: "easeOutQuart"
-          }
-        }
+      })
+      .catch((error) => {
+        console.error("Erro ao carregar dados dos gráficos:", error);
       });
-    }).catch((error) => {
-      console.error("Erro ao carregar dados dos gráficos:", error);
-    });
 
     const chatBox = document.getElementById("chat-box");
     const chatInput = document.getElementById("chat-input");
     const btnMicrofone = document.getElementById("btn-microfone");
-    const switchVoz = document.getElementById("switch-voz");
     const btnLimparChat = document.getElementById("btn-limpar-chat");
     const avisoVazio = document.getElementById("chat-vazio-aviso");
-
 
     axios.get("/api/ai/historico").then((res) => {
       if (res.data && res.data.length > 0 && avisoVazio) {
@@ -243,8 +253,12 @@
       }
       if (res.data) {
         res.data.forEach((item) => {
-          appendMsg(item.mensagem, "user", false);
-          appendMsg(item.resposta, "ia", false);
+          const msgUser = item.mensagem || item.pergunta || item.text;
+          const msgIa = item.resposta || item.text;
+          if (msgUser && msgIa) {
+            appendMsg(msgUser, "user", false);
+            appendMsg(msgIa, "ia", false);
+          }
         });
       }
     });
@@ -257,15 +271,18 @@
         showCancelButton: true,
         confirmButtonColor: "#FFCC00",
         cancelButtonColor: "#212529",
-        confirmButtonText: '<span style="color: #212529; font-weight:600;">Sim, apagar!</span>',
+        confirmButtonText:
+          '<span style="color: #212529; font-weight:600;">Sim, apagar!</span>',
         cancelButtonText: "Cancelar",
         background: "#ffffff",
       }).then((result) => {
         if (result.isConfirmed) {
           axios
             .post("/api/ai/limpar-historico")
-            .then((res) => {
-              const mensagens = chatBox.querySelectorAll("div:not(#chat-vazio-aviso)");
+            .then(() => {
+              const mensagens = chatBox.querySelectorAll(
+                "div:not(#chat-vazio-aviso)",
+              );
               mensagens.forEach((m) => m.remove());
               if (avisoVazio) avisoVazio.style.display = "block";
               window.speechSynthesis.cancel();
@@ -275,13 +292,14 @@
                 text: "O seu histórico de conversas foi limpo.",
                 icon: "success",
                 confirmButtonColor: "#FFCC00",
-                confirmButtonText: '<span style="color: #212529; font-weight:600;">OK</span>',
+                confirmButtonText:
+                  '<span style="color: #212529; font-weight:600;">OK</span>',
               });
             })
             .catch(() => {
               Swal.fire({
                 title: "Erro!",
-                text: "Não foi possível apagar o histórico de interações. Verifique o servidor.",
+                text: "Não foi possível apagar o histórico. Verifique o servidor.",
                 icon: "error",
                 confirmButtonColor: "#212529",
               });
@@ -290,7 +308,9 @@
       });
     });
 
-    document.getElementById("btn-enviar-ia").addEventListener("click", enviarMensagemIa);
+    document
+      .getElementById("btn-enviar-ia")
+      .addEventListener("click", enviarMensagemIa);
     chatInput.addEventListener("keypress", function (e) {
       if (e.key === "Enter") enviarMensagemIa();
     });
@@ -303,13 +323,29 @@
       appendMsg(msg, "user", false);
       chatInput.value = "";
 
+      const dadosJson = {
+        mensagem: msg,
+      };
+
       axios
-        .post("/api/ai/pergunta", { mensagem: msg })
-        .then((res) => {
-          appendMsg(res.data.resposta, "ia", true);
+        .post("/api/ai/pergunta", dadosJson, {
+          headers: { "Content-Type": "application/json" },
         })
-        .catch(() => {
-          appendMsg("Ocorreu um erro na comunicação. Verifique a sua ligação.", "ia text-danger", false);
+        .then((res) => {
+          const respostaIA =
+            res.data.resposta ||
+            (typeof res.data === "string"
+              ? res.data
+              : JSON.stringify(res.data));
+          appendMsg(respostaIA, "ia", true);
+        })
+        .catch((err) => {
+          console.error("Erro ao comunicar com o servidor:", err);
+          appendMsg(
+            "Ocorreu um erro na comunicação. Verifique a sua ligação.",
+            "ia text-danger",
+            false,
+          );
         });
     }
 
@@ -326,7 +362,8 @@
       }
     }
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
       recognition.lang = "pt-PT";
@@ -361,18 +398,19 @@
       btnMicrofone.style.display = "none";
     }
 
-
     function falarTexto(texto) {
       if (!switchVoz.checked) return;
 
-      const textoLimpo = texto.replace(/[*#_\-`]/g, "");
+      const textoLimpo = text.replace(/[*#_\-`]/g, "");
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(textoLimpo);
       utterance.lang = "pt-PT";
 
       const vozes = window.speechSynthesis.getVoices();
-      const vozPortugal = vozes.find((v) => v.lang === "pt-PT" || v.lang.includes("pt-PT"));
+      const vozPortugal = vozes.find(
+        (v) => v.lang === "pt-PT" || v.lang.includes("pt-PT"),
+      );
       if (vozPortugal) {
         utterance.voice = vozPortugal;
       }
