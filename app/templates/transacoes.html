@@ -21,7 +21,6 @@
 </style>
 {% endblock %} {% block content %}
 <div class="row g-4">
-  {# --- FORMULÁRIO DE LANÇAMENTO --- #}
   <div class="col-12 col-lg-5">
     <div class="card p-4 border-custom shadow-sm">
       <h4 class="fw-bold mb-3">
@@ -102,13 +101,22 @@
     </div>
   </div>
 
-  {# --- EXTRATO GERAL (HÍBRIDO COMPATÍVEL) --- #}
   <div class="col-12 col-lg-7">
     <div class="card p-4 border-custom shadow-sm">
-      <h4 class="fw-bold mb-3">
-        <i class="bi bi-list-columns-reverse text-warning me-2"></i> Extrato
-        Geral
-      </h4>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold m-0">
+          <i class="bi bi-list-columns-reverse text-warning me-2"></i> Extrato
+          Geral
+        </h4>
+        <a
+          href="{{ url_for('dashboard.exportar_extrato_pdf') }}"
+          class="btn btn-dark btn-sm"
+          style="border-left: 3px solid #ffcc00"
+        >
+          <i class="bi bi-file-earmark-pdf-fill text-warning me-1"></i> PDF
+        </a>
+      </div>
+
       <div class="table-responsive d-none d-md-block">
         <table class="table table-hover align-middle">
           <thead>
@@ -186,7 +194,7 @@
       </div>
 
       <div class="d-block d-md-none" id="extrato-mobile">
-        {# --- Cards de Receitas --- #} {% for r in data.receitas %}
+        {% for r in data.receitas %}
         <div
           class="card p-3 mb-2 border-custom transacao-mobile-card receita-border shadow-sm bg-white"
         >
@@ -224,8 +232,7 @@
             </div>
           </div>
         </div>
-        {% endfor %} {# --- Cards de Despesas --- #} {% for d in data.despesas
-        %}
+        {% endfor %} {% for d in data.despesas %}
         <div
           class="card p-3 mb-2 border-custom transacao-mobile-card despesa-border shadow-sm bg-white"
         >
@@ -273,7 +280,6 @@
   </div>
 </div>
 
-{# --- MOTOR DE INTERRUPTORES E VALIDAÇÕES JS --- #}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {

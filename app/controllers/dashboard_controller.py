@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, make_response
 from flask_login import login_required, current_user
 from app.services.financial_service import FinancialService
+from app.services.pdf_service import PDFService
 from datetime import datetime, date
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -22,14 +23,13 @@ def transacoes():
             try:
                 data_selecionada = datetime.strptime(data_str, '%Y-%m-%d').date()
                 if data_selecionada > date.today():
-                    flash("Não é permitido registar transações em datas futuras.", "danger")
+                    flash("Não é permitido registar transações em datas futures.", "danger")
                     data = FinancialService.get_dashboard_data(current_user.id)
                     return render_template('transacoes.html', data=data)
             except ValueError:
                 flash("Formato de data inválido.", "danger")
                 data = FinancialService.get_dashboard_data(current_user.id)
                 return render_template('transacoes.html', data=data)
-
 
         if FinancialService.add_transaction(current_user.id, request.form, tipo):
             return redirect(url_for('dashboard.index')) 
@@ -70,3 +70,23 @@ def limpar_historico_ia():
     except Exception as e:
         db.session.rollback()
         return jsonify({"status": "erro", "mensagem": str(e)}), 500
+
+@dashboard_bp.route('/transacoes/exportar-pdf', methods=['GET'])
+@login_required
+def exportar_extrato_pdf():
+    data = FinancialService.get_dashboard_data(current_user.id)
+    try:
+        pdf_bytes = PDFService.gerar_extrato_pdf(
+            user_name=current_user.nome,
+            receitas=data.get('receitas', []),
+            despesas=data.get('despesas', []),
+            total_receitas=data.get('total_receitas', 0.0),
+            total_despesas=data.get('total_despesas', 0.0),
+            saldo_atual=data.get('total_receitas', 0.0) - data.get('total_despesas', 0.0)
+        )
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=extrato_lombongocare.pdf'
+        return response
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
