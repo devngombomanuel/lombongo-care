@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash
 from flask_login import login_required, current_user
 from app.services.financial_service import FinancialService
+from datetime import datetime, date
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -15,9 +16,24 @@ def index():
 def transacoes():
     if request.method == 'POST':
         tipo = request.form.get('tipo_transacao') 
-        # O objeto request.form agora transporta automaticamente o novo input 'periodicidade' para o service
+        data_str = request.form.get('data')
+
+        if data_str:
+            try:
+                data_selecionada = datetime.strptime(data_str, '%Y-%m-%d').date()
+                if data_selecionada > date.today():
+                    flash("Não é permitido registar transações em datas futuras.", "danger")
+                    data = FinancialService.get_dashboard_data(current_user.id)
+                    return render_template('transacoes.html', data=data)
+            except ValueError:
+                flash("Formato de data inválido.", "danger")
+                data = FinancialService.get_dashboard_data(current_user.id)
+                return render_template('transacoes.html', data=data)
+
+
         if FinancialService.add_transaction(current_user.id, request.form, tipo):
             return redirect(url_for('dashboard.index')) 
+            
     data = FinancialService.get_dashboard_data(current_user.id)
     return render_template('transacoes.html', data=data)
 
