@@ -36,7 +36,8 @@ def transacoes():
             try:
                 valor_despesa = float(valor_str)
                 data_atual = FinancialService.get_dashboard_data(current_user.id)
-                saldo_atual = data_atual.get('total_receitas', 0.0) - data_atual.get('total_despesas', 0.0)
+                # Otimizado para usar a chave centralizada no Service
+                saldo_atual = data_atual.get('saldo_atual', 0.0)
                 
                 if saldo_atual <= 0 or valor_despesa > saldo_atual:
                     flash(f"Operação rejeitada. Saldo insuficiente para cobrir esta despesa (Saldo atual: {saldo_atual:,.2f} Kz).", "danger")
@@ -46,7 +47,9 @@ def transacoes():
                 pass
 
         if FinancialService.add_transaction(current_user.id, request.form, tipo):
-            return redirect(url_for('dashboard.index')) 
+            flash("Registo financeiro lançado com sucesso!", "success")
+            # CORREÇÃO: Redireciona para a mesma página para atualizar a listagem e o extrato instantaneamente
+            return redirect(url_for('dashboard.transacoes')) 
             
     data = FinancialService.get_dashboard_data(current_user.id)
     return render_template('transacoes.html', data=data)
@@ -113,6 +116,7 @@ def remover_transacao(tipo, id):
         FinancialRepository.delete_receita(id, current_user.id)
     elif tipo == 'despesa':
         FinancialRepository.delete_despesa(id, current_user.id)
+    flash("Registo removido com sucesso.", "success")
     return redirect(url_for('dashboard.transacoes'))
 
 @dashboard_bp.route('/api/ai/limpar-historico', methods=['POST'])
@@ -139,7 +143,7 @@ def exportar_extrato_pdf():
             despesas=data.get('despesas', []),
             total_receitas=data.get('total_receitas', 0.0),
             total_despesas=data.get('total_despesas', 0.0),
-            saldo_atual=data.get('total_receitas', 0.0) - data.get('total_despesas', 0.0)
+            saldo_atual=data.get('saldo_atual', 0.0)
         )
         response = make_response(pdf_bytes)
         response.headers['Content-Type'] = 'application/pdf'

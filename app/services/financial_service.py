@@ -4,7 +4,50 @@ from datetime import datetime
 class FinancialService:
     @staticmethod
     def get_dashboard_data(user_id):
-        return FinancialRepository.get_all_data_by_user(user_id)
+        lista_receitas = FinancialRepository.get_receitas_by_user(user_id)
+        lista_despesas = FinancialRepository.get_despesas_by_user(user_id)
+        
+        receitas_processadas = []
+        total_receitas = 0.0
+        for r in lista_receitas:
+            valor = float(r.valor)
+            total_receitas += valor
+            receitas_processadas.append({
+                'id': r.id,
+                'data': r.data.strftime('%d/%m/%Y') if hasattr(r.data, 'strftime') else str(r.data),
+                'descricao': r.descricao,
+                'categoria': r.categoria,
+                'periodicidade': getattr(r, 'periodicidade', 'unica'),
+                'valor': valor
+            })
+            
+        despesas_processadas = []
+        total_despesas = 0.0
+        gastos_por_categoria = {}
+        
+        for d in lista_despesas:
+            valor = float(d.valor)
+            total_despesas += valor
+            despesas_processadas.append({
+                'id': d.id,
+                'data': d.data.strftime('%d/%m/%Y') if hasattr(d.data, 'strftime') else str(d.data),
+                'descricao': d.descricao,
+                'categoria': d.categoria,
+                'periodicidade': getattr(d, 'periodicidade', 'unica'),
+                'valor': valor
+            })
+            
+            cat = d.categoria if d.categoria else "Geral"
+            gastos_por_categoria[cat] = gastos_por_categoria.get(cat, 0.0) + valor
+
+        return {
+            'receitas': receitas_processadas,
+            'despesas': despesas_processadas,
+            'total_receitas': total_receitas,
+            'total_despesas': total_despesas,
+            'saldo_atual': total_receitas - total_despesas,
+            'gastos_por_categoria': gastos_por_categoria
+        }
 
     @staticmethod
     def add_transaction(user_id, form_data, tipo):
