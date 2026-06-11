@@ -113,7 +113,7 @@
             href="{{ url_for('dashboard.index') }}"
             class="btn btn-light btn-sm border"
           >
-            <i class="bi bi-arrow-left me-1"></i> Voltar Para o Painel
+            <i class="bi bi-arrow-left me-1"></i> Painel
           </a>
           <a
             href="{{ url_for('dashboard.exportar_extrato_pdf') }}"
@@ -134,7 +134,7 @@
               <th>Categoria</th>
               <th>Periodicidade</th>
               <th>Valor</th>
-              <th class="text-end">Ação</th>
+              <th class="text-end">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -152,6 +152,19 @@
                 +{{ "%.2f"|format(r.valor) }} Kz
               </td>
               <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-link text-dark p-0 me-2 btn-editar-modal"
+                  data-id="{{ r.id }}"
+                  data-tipo="receita"
+                  data-data="{{ r.data }}"
+                  data-descricao="{{ r.descricao }}"
+                  data-categoria="{{ r.categoria }}"
+                  data-periodicidade="{{ r.periodicidade|default('unica', true) }}"
+                  data-valor="{{ r.valor }}"
+                >
+                  <i class="bi bi-pencil-square fs-5"></i>
+                </button>
                 <form
                   action="{{ url_for('dashboard.remover_transacao', tipo='receita', id=r.id) }}"
                   method="POST"
@@ -181,6 +194,19 @@
                 -{{ "%.2f"|format(d.valor) }} Kz
               </td>
               <td class="text-end">
+                <button
+                  type="button"
+                  class="btn btn-link text-dark p-0 me-2 btn-editar-modal"
+                  data-id="{{ d.id }}"
+                  data-tipo="despesa"
+                  data-data="{{ d.data }}"
+                  data-descricao="{{ d.descricao }}"
+                  data-categoria="{{ d.categoria }}"
+                  data-periodicidade="{{ d.periodicidade|default('unica', true) }}"
+                  data-valor="{{ d.valor }}"
+                >
+                  <i class="bi bi-pencil-square fs-5"></i>
+                </button>
                 <form
                   action="{{ url_for('dashboard.remover_transacao', tipo='despesa', id=d.id) }}"
                   method="POST"
@@ -225,18 +251,33 @@
               <div class="text-success fw-bold mb-2">
                 +{{ "%.2f"|format(r.valor) }} Kz
               </div>
-              <form
-                action="{{ url_for('dashboard.remover_transacao', tipo='receita', id=r.id) }}"
-                method="POST"
-                class="js-form-eliminar m-0 p-0"
-              >
+              <div class="d-flex gap-2 justify-content-end">
                 <button
                   type="button"
-                  class="btn btn-sm btn-light text-danger border border-danger-subtle rounded-3 px-2 py-1 js-btn-eliminar"
+                  class="btn btn-sm btn-light border rounded-3 px-2 py-1 btn-editar-modal"
+                  data-id="{{ r.id }}"
+                  data-tipo="receita"
+                  data-data="{{ r.data }}"
+                  data-descricao="{{ r.descricao }}"
+                  data-categoria="{{ r.categoria }}"
+                  data-periodicidade="{{ r.periodicidade|default('unica', true) }}"
+                  data-valor="{{ r.valor }}"
                 >
-                  <i class="bi bi-trash3-fill me-1"></i> Apagar
+                  <i class="bi bi-pencil-square"></i>
                 </button>
-              </form>
+                <form
+                  action="{{ url_for('dashboard.remover_transacao', tipo='receita', id=r.id) }}"
+                  method="POST"
+                  class="js-form-eliminar m-0 p-0"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-light text-danger border border-danger-subtle rounded-3 px-2 py-1 js-btn-eliminar"
+                  >
+                    <i class="bi bi-trash3-fill"></i>
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -263,18 +304,33 @@
               <div class="text-danger fw-bold mb-2">
                 -{{ "%.2f"|format(d.valor) }} Kz
               </div>
-              <form
-                action="{{ url_for('dashboard.remover_transacao', tipo='despesa', id=d.id) }}"
-                method="POST"
-                class="js-form-eliminar m-0 p-0"
-              >
+              <div class="d-flex gap-2 justify-content-end">
                 <button
                   type="button"
-                  class="btn btn-sm btn-light text-danger border border-danger-subtle rounded-3 px-2 py-1 js-btn-eliminar"
+                  class="btn btn-sm btn-light border rounded-3 px-2 py-1 btn-editar-modal"
+                  data-id="{{ d.id }}"
+                  data-tipo="despesa"
+                  data-data="{{ d.data }}"
+                  data-descricao="{{ d.descricao }}"
+                  data-categoria="{{ d.categoria }}"
+                  data-periodicidade="{{ d.periodicidade|default('unica', true) }}"
+                  data-valor="{{ d.valor }}"
                 >
-                  <i class="bi bi-trash3-fill me-1"></i> Apagar
+                  <i class="bi bi-pencil-square"></i>
                 </button>
-              </form>
+                <form
+                  action="{{ url_for('dashboard.remover_transacao', tipo='despesa', id=d.id) }}"
+                  method="POST"
+                  class="js-form-eliminar m-0 p-0"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-light text-danger border border-danger-subtle rounded-3 px-2 py-1 js-btn-eliminar"
+                  >
+                    <i class="bi bi-trash3-fill"></i>
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -284,6 +340,100 @@
         </div>
         {% endif %}
       </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal fade"
+  id="modalEditarTransacao"
+  tabindex="-1"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-custom">
+      <div class="modal-header bg-dark text-white border-bottom-0">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-pencil-square text-warning me-2"></i>Editar Registo
+        </h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <form id="formEditarTransacao" method="POST" action="">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Valor (Kz)</label>
+            <input
+              type="number"
+              step="0.01"
+              name="valor"
+              id="edit_valor"
+              class="form-control border-custom"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Descrição</label>
+            <input
+              type="text"
+              name="descricao"
+              id="edit_descricao"
+              class="form-control border-custom"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Categoria</label>
+            <input
+              type="text"
+              name="categoria"
+              id="edit_categoria"
+              class="form-control border-custom"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Periodicidade</label>
+            <select
+              name="periodicidade"
+              id="edit_periodicidade"
+              class="form-select border-custom"
+              required
+            >
+              <option value="unica">Única</option>
+              <option value="diaria">Diária</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensal">Mensal</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Data</label>
+            <input
+              type="date"
+              name="data"
+              id="edit_data"
+              class="form-control border-custom"
+              required
+            />
+          </div>
+        </div>
+        <div class="modal-footer border-top-0">
+          <button
+            type="button"
+            class="btn btn-light border"
+            data-bs-dismiss="modal"
+          >
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary-yellow">
+            <i class="bi bi-check-lg me-1"></i>Salvar Alterações
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -299,7 +449,10 @@
     const dataMaxima = `${ano}-${mes}-${dia}`;
 
     inputData.max = dataMaxima;
-    inputData.value = dataMaxima;
+    if (!inputData.value) inputData.value = dataMaxima;
+
+    const editDataInput = document.getElementById("edit_data");
+    editDataInput.max = dataMaxima;
 
     const tipoTransacao = document.getElementById("tipo_transacao");
     const optUnica = document.getElementById("opt-unica");
@@ -314,6 +467,37 @@
 
     tipoTransacao.addEventListener("change", atualizarLabelUnica);
     atualizarLabelUnica();
+
+    const modalEditar = new bootstrap.Modal(
+      document.getElementById("modalEditarTransacao"),
+    );
+    const formEditar = document.getElementById("formEditarTransacao");
+
+    document.querySelectorAll(".btn-editar-modal").forEach((botao) => {
+      botao.addEventListener("click", function () {
+        const id = this.getAttribute("data-id");
+        const tipo = this.getAttribute("data-tipo");
+
+        document.getElementById("edit_valor").value =
+          this.getAttribute("data-valor");
+        document.getElementById("edit_descricao").value =
+          this.getAttribute("data-descricao");
+        document.getElementById("edit_categoria").value =
+          this.getAttribute("data-categoria");
+        document.getElementById("edit_periodicidade").value =
+          this.getAttribute("data-periodicidade");
+
+        let dataOriginal = this.getAttribute("data-data");
+        if (dataOriginal.includes("/")) {
+          const partes = dataOriginal.split("/");
+          dataOriginal = `${partes[2]}-${partes[1]}-${partes[0]}`;
+        }
+        document.getElementById("edit_data").value = dataOriginal;
+
+        formEditar.action = `/transacao/editar/${tipo}/${id}`;
+        modalEditar.show();
+      });
+    });
 
     document.body.addEventListener("click", function (e) {
       const botao = e.target.closest(".js-btn-eliminar");
