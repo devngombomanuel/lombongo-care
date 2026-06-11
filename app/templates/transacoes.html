@@ -18,8 +18,38 @@
   .transacao-mobile-card.despesa-border {
     border-left-color: #dc3545;
   }
+
+  /* Garante o ajuste perfeito ao ecrã sem sobreposições */
+  .tabela-ajustada {
+    table-layout: fixed;
+    width: 100%;
+  }
+  .tabela-ajustada th,
+  .tabela-ajustada td {
+    font-size: 0.85rem;
+    padding: 10px 8px !important;
+  }
+  .texto-celula-truncado {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
 </style>
 {% endblock %} {% block content %}
+<!-- Botão posicionado acima de tudo (Desktop e Mobile) -->
+<div class="row mb-3">
+  <div class="col-12">
+    <a
+      href="{{ url_for('dashboard.index') }}"
+      class="btn btn-light btn-sm border px-3 py-1.5 shadow-sm"
+    >
+      <i class="bi bi-arrow-left me-1"></i> Voltar para o painel
+    </a>
+  </div>
+</div>
+
 <div class="row g-4">
   <div class="col-12 col-lg-5">
     <div class="card p-4 border-custom shadow-sm">
@@ -110,51 +140,60 @@
         </h4>
         <div class="d-flex gap-2">
           <a
-            href="{{ url_for('dashboard.index') }}"
-            class="btn btn-light btn-sm border"
-          >
-            <i class="bi bi-arrow-left me-1"></i> Painel
-          </a>
-          <a
             href="{{ url_for('dashboard.exportar_extrato_pdf') }}"
-            class="btn btn-dark btn-sm"
+            class="btn btn-dark btn-sm px-3"
             style="border-left: 3px solid #ffcc00"
           >
-            <i class="bi bi-file-earmark-pdf-fill text-warning me-1"></i> PDF
+            <i class="bi bi-file-earmark-pdf-fill text-warning me-1"></i> Gerar
+            Extrato
           </a>
         </div>
       </div>
 
-      <div class="table-responsive d-none d-md-block">
-        <table class="table table-hover align-middle">
+      <!-- Estrutura de Tabela com Distribuição Blindada contra Quebras -->
+      <div class="d-none d-md-block" style="width: 100%">
+        <table class="table table-hover align-middle mb-0 tabela-ajustada">
           <thead>
             <tr class="table-light">
-              <th>Data</th>
-              <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Periodicidade</th>
-              <th>Valor</th>
-              <th class="text-end">Ações</th>
+              <th style="width: 13%">Data</th>
+              <th style="width: 25%">Descrição</th>
+              <th style="width: 16%">Categoria</th>
+              <!-- Forçado text-nowrap e aumentado para 18% para o título nunca quebrar -->
+              <th class="text-nowrap" style="width: 18%">Periodicidade</th>
+              <th style="width: 18%">Valor</th>
+              <th class="text-end" style="width: 10%">Ações</th>
             </tr>
           </thead>
           <tbody>
             {% for r in data.receitas %}
             <tr>
-              <td>{{ r.data }}</td>
-              <td class="fw-semibold">{{ r.descricao }}</td>
-              <td><span class="badge bg-secondary">{{ r.categoria }}</span></td>
+              <td class="text-nowrap">{{ r.data }}</td>
               <td>
-                <span class="badge bg-light text-dark border"
+                <span
+                  class="fw-semibold texto-celula-truncado"
+                  title="{{ r.descricao }}"
+                  >{{ r.descricao }}</span
+                >
+              </td>
+              <td>
+                <span
+                  class="badge bg-secondary texto-celula-truncado"
+                  title="{{ r.categoria }}"
+                  >{{ r.categoria }}</span
+                >
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border text-nowrap"
                   >{{ r.periodicidade|default('unica', true) }}</span
                 >
               </td>
-              <td class="text-success fw-bold">
+              <td class="text-success fw-bold text-nowrap">
                 +{{ "%.2f"|format(r.valor) }} Kz
               </td>
-              <td class="text-end">
+              <td class="text-end text-nowrap">
                 <button
                   type="button"
-                  class="btn btn-link text-dark p-0 me-2 btn-editar-modal"
+                  class="btn btn-link text-dark p-0 me-3 btn-editar-modal"
                   data-id="{{ r.id }}"
                   data-tipo="receita"
                   data-data="{{ r.data }}"
@@ -162,6 +201,7 @@
                   data-categoria="{{ r.categoria }}"
                   data-periodicidade="{{ r.periodicidade|default('unica', true) }}"
                   data-valor="{{ r.valor }}"
+                  title="Editar registo"
                 >
                   <i class="bi bi-pencil-square fs-5"></i>
                 </button>
@@ -182,21 +222,33 @@
             </tr>
             {% endfor %} {% for d in data.despesas %}
             <tr>
-              <td>{{ d.data }}</td>
-              <td class="fw-semibold">{{ d.descricao }}</td>
-              <td><span class="badge bg-dark">{{ d.categoria }}</span></td>
+              <td class="text-nowrap">{{ d.data }}</td>
               <td>
-                <span class="badge bg-light text-dark border"
+                <span
+                  class="fw-semibold texto-celula-truncado"
+                  title="{{ d.descricao }}"
+                  >{{ d.descricao }}</span
+                >
+              </td>
+              <td>
+                <span
+                  class="badge bg-dark texto-celula-truncado"
+                  title="{{ d.categoria }}"
+                  >{{ d.categoria }}</span
+                >
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border text-nowrap"
                   >{{ d.periodicidade|default('unica', true) }}</span
                 >
               </td>
-              <td class="text-danger fw-bold">
+              <td class="text-danger fw-bold text-nowrap">
                 -{{ "%.2f"|format(d.valor) }} Kz
               </td>
-              <td class="text-end">
+              <td class="text-end text-nowrap">
                 <button
                   type="button"
-                  class="btn btn-link text-dark p-0 me-2 btn-editar-modal"
+                  class="btn btn-link text-dark p-0 me-3 btn-editar-modal"
                   data-id="{{ d.id }}"
                   data-tipo="despesa"
                   data-data="{{ d.data }}"
@@ -204,6 +256,7 @@
                   data-categoria="{{ d.categoria }}"
                   data-periodicidade="{{ d.periodicidade|default('unica', true) }}"
                   data-valor="{{ d.valor }}"
+                  title="Editar registo"
                 >
                   <i class="bi bi-pencil-square fs-5"></i>
                 </button>
@@ -227,6 +280,7 @@
         </table>
       </div>
 
+      <!-- Visualização Mobile Alternativa -->
       <div class="d-block d-md-none" id="extrato-mobile">
         {% for r in data.receitas %}
         <div
@@ -344,6 +398,7 @@
   </div>
 </div>
 
+<!-- Modal de Edição -->
 <div
   class="modal fade"
   id="modalEditarTransacao"
