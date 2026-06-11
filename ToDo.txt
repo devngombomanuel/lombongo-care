@@ -1,4 +1,2 @@
 ***Fazer o offline-first
-***Fazer edição de dados
 
-***Não permitir que se cadastre despesa com nenhum dinheiro na conta
