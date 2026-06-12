@@ -54,7 +54,7 @@
     <div class="card p-3 border-custom shadow-sm">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold small text-uppercase text-muted m-0">
-          <i class="bi bi-calendar3 text-warning me-1"></i> Gastos por Período
+          <i class="bi bi-calendar3 text-warning me-1"></i> Fluxo por Período
         </h5>
         <div class="btn-group btn-group-sm" role="group">
           <button
@@ -190,12 +190,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   let periodChart = null;
 
-  function inicializarGraficoPeriodo(labels, valores) {
+  function inicializarGraficoPeriodo(labels, receitas, despesas) {
     const ctx = document.getElementById("periodChart").getContext("2d");
 
     if (periodChart) {
@@ -208,15 +209,27 @@
         labels: labels,
         datasets: [
           {
-            label: "Total Gasto (Kz)",
-            data: valores,
-            backgroundColor: "rgba(255, 204, 0, 0.15)",
-            borderColor: "#FFCC00",
+            label: "Receitas (Kz)",
+            data: receitas,
+            borderColor: "#198754",
+            backgroundColor: "rgba(25, 135, 84, 0.05)",
             borderWidth: 2.5,
             tension: 0.3,
             fill: true,
-            pointBackgroundColor: "#212529",
-            pointBorderColor: "#FFCC00",
+            pointBackgroundColor: "#198754",
+            pointBorderColor: "#ffffff",
+            pointRadius: 4,
+          },
+          {
+            label: "Despesas (Kz)",
+            data: despesas,
+            borderColor: "#dc3545",
+            backgroundColor: "rgba(220, 53, 69, 0.05)",
+            borderWidth: 2.5,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: "#dc3545",
+            pointBorderColor: "#ffffff",
             pointRadius: 4,
           },
         ],
@@ -225,7 +238,7 @@
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { display: false },
+          legend: { display: true, position: "top" },
         },
         scales: {
           y: {
@@ -248,7 +261,7 @@
   }
 
   function mudarPeriodo(tipo) {
-    const botoes = document.querySelectorAll("[onclick^='mudarPeriodo']");
+    const botoes = document.querySelectorAll("[id^='btn-period-']");
     botoes.forEach((btn) => btn.classList.remove("active"));
 
     const btnAtivo = document.getElementById(`btn-period-${tipo}`);
@@ -258,7 +271,11 @@
       .get(`/api/dados-periodo?tipo=${tipo}`)
       .then((res) => {
         if (res.data && res.data.labels) {
-          inicializarGraficoPeriodo(res.data.labels, res.data.valores);
+          inicializarGraficoPeriodo(
+            res.data.labels,
+            res.data.receitas,
+            res.data.despesas,
+          );
         }
       })
       .catch((err) =>
@@ -279,7 +296,6 @@
       }
     });
 
-    // Carrega o gráfico de período inicial (Diário)
     mudarPeriodo("diario");
 
     axios
@@ -527,7 +543,7 @@
       const textoLimpo = texto.replace(/[*#_\-`]/g, "");
       window.speechSynthesis.cancel();
 
-      const utterance = new SynthesisUtterance(textoLimpo);
+      const utterance = new SpeechSynthesisUtterance(textoLimpo);
       utterance.lang = "pt-PT";
 
       const vozes = window.speechSynthesis.getVoices();

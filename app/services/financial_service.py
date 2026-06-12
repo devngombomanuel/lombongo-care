@@ -93,49 +93,48 @@ class FinancialService:
         
         agrupado_receitas = defaultdict(float)
         agrupado_despesas = defaultdict(float)
-        todas_chaves = set()
+        todas_datas = set()
 
         for r in lista_receitas:
             if not r.data:
                 continue
-            valor = float(r.valor)
-            
-            if tipo == 'diario':
-                chave = r.data.strftime('%d %b')
-            elif tipo == 'semanal':
-                chave = f"Semana {r.data.strftime('%U')}"
-            elif tipo == 'mensal':
-                chave = r.data.strftime('%b/%Y')
-            elif tipo == 'anual':
-                chave = r.data.strftime('%Y')
-            else:
-                chave = r.data.strftime('%Y-%m-%d')
-                
-            agrupado_receitas[chave] += valor
-            todas_chaves.add(chave)
+            agrupado_receitas[r.data] += float(r.valor)
+            todas_datas.add(r.data)
+
         for d in lista_despesas:
             if not d.data:
                 continue
-            valor = float(d.valor)
-            
+            agrupado_despesas[d.data] += float(d.valor)
+            todas_datas.add(d.data)
+
+        datas_ordenadas = sorted(list(todas_datas))
+
+        labels = []
+        valores_receitas = []
+        valores_despesas = []
+        periodos_vistos = {}
+
+        for dt in datas_ordenadas:
             if tipo == 'diario':
-                chave = d.data.strftime('%d %b')
+                chave_label = dt.strftime('%d %b')
             elif tipo == 'semanal':
-                chave = f"Semana {d.data.strftime('%U')}"
+                chave_label = f"Semana {dt.strftime('%U')}"
             elif tipo == 'mensal':
-                chave = d.data.strftime('%b/%Y')
+                chave_label = dt.strftime('%b/%Y')
             elif tipo == 'anual':
-                chave = d.data.strftime('%Y')
+                chave_label = dt.strftime('%Y')
             else:
-                chave = d.data.strftime('%Y-%m-%d')
-                
-            agrupado_despesas[chave] += valor
-            todas_chaves.add(chave)
+                chave_label = dt.strftime('%Y-%m-%d')
 
-        labels = sorted(list(todas_chaves))
-
-        valores_receitas = [agrupado_receitas[chave] for chave in labels]
-        valores_despesas = [agrupado_despesas[chave] for chave in labels]
+            if chave_label in periodos_vistos:
+                idx = periodos_vistos[chave_label]
+                valores_receitas[idx] += agrupado_receitas[dt]
+                valores_despesas[idx] += agrupado_despesas[dt]
+            else:
+                labels.append(chave_label)
+                valores_receitas.append(agrupado_receitas[dt])
+                valores_despesas.append(agrupado_despesas[dt])
+                periodos_vistos[chave_label] = len(labels) - 1
 
         return {
             "labels": labels,
