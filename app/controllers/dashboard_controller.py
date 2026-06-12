@@ -36,7 +36,6 @@ def transacoes():
             try:
                 valor_despesa = float(valor_str)
                 data_atual = FinancialService.get_dashboard_data(current_user.id)
-                # Otimizado para usar a chave centralizada no Service
                 saldo_atual = data_atual.get('saldo_atual', 0.0)
                 
                 if saldo_atual <= 0 or valor_despesa > saldo_atual:
@@ -48,11 +47,17 @@ def transacoes():
 
         if FinancialService.add_transaction(current_user.id, request.form, tipo):
             flash("Registo financeiro lançado com sucesso!", "success")
-            # CORREÇÃO: Redireciona para a mesma página para atualizar a listagem e o extrato instantaneamente
             return redirect(url_for('dashboard.transacoes')) 
             
     data = FinancialService.get_dashboard_data(current_user.id)
     return render_template('transacoes.html', data=data)
+
+@dashboard_bp.route('/api/dados-periodo')
+@login_required
+def dados_periodo():
+    tipo = request.args.get('tipo', 'diario') # diario, semanal, mensal, anual
+    dados = FinancialService.get_gastos_por_periodo(current_user.id, tipo)
+    return jsonify(dados)
 
 @dashboard_bp.route('/transacao/editar/<string:tipo>/<int:id>', methods=['POST'])
 @login_required

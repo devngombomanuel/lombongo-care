@@ -49,6 +49,55 @@
   </div>
 </div>
 
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card p-3 border-custom shadow-sm">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold small text-uppercase text-muted m-0">
+          <i class="bi bi-calendar3 text-warning me-1"></i> Gastos por Período
+        </h5>
+        <div class="btn-group btn-group-sm" role="group">
+          <button
+            type="button"
+            class="btn btn-outline-dark active"
+            id="btn-period-diario"
+            onclick="mudarPeriodo('diario')"
+          >
+            Diário
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-dark"
+            id="btn-period-semanal"
+            onclick="mudarPeriodo('semanal')"
+          >
+            Semanal
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-dark"
+            id="btn-period-mensal"
+            onclick="mudarPeriodo('mensal')"
+          >
+            Mensal
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-dark"
+            id="btn-period-anual"
+            onclick="mudarPeriodo('anual')"
+          >
+            Anual
+          </button>
+        </div>
+      </div>
+      <div style="height: 300px">
+        <canvas id="periodChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row g-4">
   <div class="col-12 col-lg-8">
     <div class="row g-4">
@@ -144,6 +193,79 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+  let periodChart = null;
+
+  function inicializarGraficoPeriodo(labels, valores) {
+    const ctx = document.getElementById("periodChart").getContext("2d");
+
+    if (periodChart) {
+      periodChart.destroy();
+    }
+
+    periodChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: "Total Gasto (Kz)",
+            data: valores,
+            backgroundColor: "rgba(255, 204, 0, 0.15)",
+            borderColor: "#FFCC00",
+            borderWidth: 2.5,
+            tension: 0.3,
+            fill: true,
+            pointBackgroundColor: "#212529",
+            pointBorderColor: "#FFCC00",
+            pointRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: "rgba(0, 0, 0, 0.05)" },
+            ticks: {
+              callback: function (value) {
+                return value.toLocaleString() + " Kz";
+              },
+            },
+          },
+          x: { grid: { display: false } },
+        },
+        animation: {
+          duration: 1500,
+          easing: "easeOutQuart",
+        },
+      },
+    });
+  }
+
+  function mudarPeriodo(tipo) {
+    const botoes = document.querySelectorAll("[onclick^='mudarPeriodo']");
+    botoes.forEach((btn) => btn.classList.remove("active"));
+
+    const btnAtivo = document.getElementById(`btn-period-${tipo}`);
+    if (btnAtivo) btnAtivo.classList.add("active");
+
+    axios
+      .get(`/api/dados-periodo?tipo=${tipo}`)
+      .then((res) => {
+        if (res.data && res.data.labels) {
+          inicializarGraficoPeriodo(res.data.labels, res.data.valores);
+        }
+      })
+      .catch((err) =>
+        console.error("Erro ao carregar período analítico:", err),
+      );
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     const switchVoz = document.getElementById("switch-voz");
     const estadoVozSalvo = localStorage.getItem("lombongo_voz_ativa");
@@ -156,6 +278,9 @@
         window.speechSynthesis.cancel();
       }
     });
+
+    // Carrega o gráfico de período inicial (Diário)
+    mudarPeriodo("diario");
 
     axios
       .get("/api/dados-graficos")
@@ -323,9 +448,7 @@
       appendMsg(msg, "user", false);
       chatInput.value = "";
 
-      const dadosJson = {
-        mensagem: msg,
-      };
+      const dadosJson = { mensagem: msg };
 
       axios
         .post("/api/ai/pergunta", dadosJson, {
@@ -401,10 +524,10 @@
     function falarTexto(texto) {
       if (!switchVoz.checked) return;
 
-      const textoLimpo = text.replace(/[*#_\-`]/g, "");
+      const textoLimpo = texto.replace(/[*#_\-`]/g, "");
       window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(textoLimpo);
+      const utterance = new SynthesisUtterance(textoLimpo);
       utterance.lang = "pt-PT";
 
       const vozes = window.speechSynthesis.getVoices();

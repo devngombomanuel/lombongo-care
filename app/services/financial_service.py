@@ -84,3 +84,36 @@ class FinancialService:
         except Exception:
             return False
         return False
+    
+    @staticmethod
+    def get_gastos_por_periodo(user_id, tipo):
+        lista_despesas = FinancialRepository.get_despesas_by_user(user_id)
+        agrupado = defaultdict(float)
+
+        for d in lista_despesas:
+            valor = float(d.valor)
+            data_obj = d.data 
+            if tipo == 'diario':
+              
+                chave = data_obj.strftime('%d %b')
+            elif tipo == 'semanal':
+                
+                chave = f"Semana {data_obj.strftime('%U')}"
+            elif tipo == 'mensal':
+                
+                chave = data_obj.strftime('%b/%Y')
+            elif tipo == 'anual':
+                
+                chave = data_obj.strftime('%Y')
+            else:
+                chave = data_obj.strftime('%Y-%m-%d')
+
+            agrupado[chave] += valor
+
+        labels = list(agrupado.keys())[::-1]
+        valores = list(agrupado.values())[::-1]
+
+        return {
+            "labels": labels,
+            "valores": valores
+        }
