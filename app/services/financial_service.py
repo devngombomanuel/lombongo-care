@@ -1,5 +1,6 @@
 from app.repositories.financial_repository import FinancialRepository
 from datetime import datetime
+from collections import defaultdict
 
 class FinancialService:
     @staticmethod
@@ -87,33 +88,57 @@ class FinancialService:
     
     @staticmethod
     def get_gastos_por_periodo(user_id, tipo):
+        lista_receitas = FinancialRepository.get_receitas_by_user(user_id)
         lista_despesas = FinancialRepository.get_despesas_by_user(user_id)
-        agrupado = defaultdict(float)
+        
+        agrupado_receitas = defaultdict(float)
+        agrupado_despesas = defaultdict(float)
+        todas_chaves = set()
 
-        for d in lista_despesas:
-            valor = float(d.valor)
-            data_obj = d.data 
+        for r in lista_receitas:
+            if not r.data:
+                continue
+            valor = float(r.valor)
+            
             if tipo == 'diario':
-              
-                chave = data_obj.strftime('%d %b')
+                chave = r.data.strftime('%d %b')
             elif tipo == 'semanal':
-                
-                chave = f"Semana {data_obj.strftime('%U')}"
+                chave = f"Semana {r.data.strftime('%U')}"
             elif tipo == 'mensal':
-                
-                chave = data_obj.strftime('%b/%Y')
+                chave = r.data.strftime('%b/%Y')
             elif tipo == 'anual':
-                
-                chave = data_obj.strftime('%Y')
+                chave = r.data.strftime('%Y')
             else:
-                chave = data_obj.strftime('%Y-%m-%d')
+                chave = r.data.strftime('%Y-%m-%d')
+                
+            agrupado_receitas[chave] += valor
+            todas_chaves.add(chave)
+        for d in lista_despesas:
+            if not d.data:
+                continue
+            valor = float(d.valor)
+            
+            if tipo == 'diario':
+                chave = d.data.strftime('%d %b')
+            elif tipo == 'semanal':
+                chave = f"Semana {d.data.strftime('%U')}"
+            elif tipo == 'mensal':
+                chave = d.data.strftime('%b/%Y')
+            elif tipo == 'anual':
+                chave = d.data.strftime('%Y')
+            else:
+                chave = d.data.strftime('%Y-%m-%d')
+                
+            agrupado_despesas[chave] += valor
+            todas_chaves.add(chave)
 
-            agrupado[chave] += valor
+        labels = sorted(list(todas_chaves))
 
-        labels = list(agrupado.keys())[::-1]
-        valores = list(agrupado.values())[::-1]
+        valores_receitas = [agrupado_receitas[chave] for chave in labels]
+        valores_despesas = [agrupado_despesas[chave] for chave in labels]
 
         return {
             "labels": labels,
-            "valores": valores
+            "receitas": valores_receitas,
+            "despesas": valores_despesas
         }
