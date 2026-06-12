@@ -13,6 +13,9 @@ def perguntar_ia():
         return jsonify({"erro": "A mensagem não pode estar vazia"}), 400
         
     resposta = AIService.generate_financial_advice(current_user.id, user_message)
+    
+    FinancialRepository.save_ia_interaction(current_user.id, user_message, resposta)
+    
     return jsonify({"resposta": resposta})
 
 @ai_bp.route('/api/ai/historico')
@@ -20,3 +23,11 @@ def perguntar_ia():
 def historico_ia():
     historico = FinancialRepository.get_ia_interactions(current_user.id)
     return jsonify([{"mensagem": h.mensagem, "resposta": h.resposta} for h in historico])
+
+@ai_bp.route('/api/ai/limpar-historico', methods=['POST'])
+@login_required
+def limpar_historico_ia():
+    sucesso = FinancialRepository.clear_ia_interactions(current_user.id)
+    if sucesso:
+        return jsonify({"status": "sucesso", "mensagem": "Histórico apagado com sucesso"})
+    return jsonify({"erro": "Não foi possível apagar o histórico"}), 500

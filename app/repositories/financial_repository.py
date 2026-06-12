@@ -1,5 +1,5 @@
 from app.database import db
-from app.models import Receita, Despesa  # Valida se os teus modelos se chamam assim
+from app.models import Receita, Despesa, InteracaoIA
 
 class FinancialRepository:
     @staticmethod
@@ -9,6 +9,35 @@ class FinancialRepository:
     @staticmethod
     def get_despesas_by_user(user_id):
         return Despesa.query.filter_by(user_id=user_id).order_by(Despesa.data.desc()).all()
+
+    @staticmethod
+    def get_ia_interactions(user_id):
+        return InteracaoIA.query.filter_by(user_id=user_id).order_by(InteracaoIA.id.asc()).all()
+
+    @staticmethod
+    def save_ia_interaction(user_id, mensagem, resposta):
+        try:
+            nova_interacao = InteracaoIA(
+                user_id=user_id,
+                mensagem=mensagem,
+                resposta=resposta
+            )
+            db.session.add(nova_interacao)
+            db.session.commit()
+            return True
+        except Exception:
+            db.session.rollback()
+            return False
+
+    @staticmethod
+    def clear_ia_interactions(user_id):
+        try:
+            InteracaoIA.query.filter_by(user_id=user_id).delete()
+            db.session.commit()
+            return True
+        except Exception:
+            db.session.rollback()
+            return False
 
     @staticmethod
     def save_receita(user_id, dados):
