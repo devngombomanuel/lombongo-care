@@ -1,5 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, make_response
+import os
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, flash, make_response, current_app
 from flask_login import login_required, current_user
+from werkzeug.utils import secure_filename
+from app.database import db
 from app.services.financial_service import FinancialService
 from app.services.pdf_service import PDFService
 from datetime import datetime, date
@@ -11,6 +14,43 @@ dashboard_bp = Blueprint('dashboard', __name__)
 def index():
     data = FinancialService.get_dashboard_data(current_user.id)
     return render_template('dashboard.html', data=data)
+
+@dashboard_bp.route('/perfil', methods=['GET', 'POST'])
+@login_required
+def perfil():
+    if request.method == 'POST':
+        current_user.nome = request.form.get('nome')
+        current_user.provincia = request.form.get('provincia')
+        current_user.municipio = request.form.get('municipio')
+        current_user.estado_civil = request.form.get('estado_civil')
+        
+        agregado = request.form.get('agregado_familiar')
+        current_user.agregado_familiar = int(agregado) if agregado else None
+        
+        current_user.ocupacao = request.form.get('ocupacao')
+        current_user.objetivo_financeiro = request.form.get('objetivo_financeiro')
+        
+        foto = request.files.get('foto_perfil')
+        if foto and foto.filename != '':
+            ext = os.path.splitext(foto.filename)[1].lower()
+            if ext in ['.png', '.jpg', '.jpeg', '.webp']:
+                nome_foto = secure_filename(f"user_{current_user.id}{ext}")
+                caminho = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'app/static/uploads'), nome_foto)
+                os.makedirs(os.path.dirname(caminho), exist_ok=True)
+                foto.save(caminho)
+                current_user.foto_perfil = nome_foto
+
+        try:
+            db.session.commit()
+            flash("Perfil atualizado com sucesso!", "success")
+        except Exception:
+            db.session.rollback()
+            flash("Erro ao atualizar o perfil.", "danger")
+            
+        return redirect(url_for('dashboard.perfil'))
+
+    data = FinancialService.get_dashboard_data(current_user.id)
+    return render_template('perfil.html', data=data)
 
 @dashboard_bp.route('/transacoes', methods=['GET', 'POST'])
 @login_required
@@ -55,7 +95,7 @@ def transacoes():
 @dashboard_bp.route('/api/dados-periodo')
 @login_required
 def dados_periodo():
-    tipo = request.args.get('tipo', 'diario') # diario, semanal, mensal, anual
+    tipo = request.args.get('tipo', 'diario')
     dados = FinancialService.get_gastos_por_periodo(current_user.id, tipo)
     return jsonify(dados)
 

@@ -12,7 +12,20 @@ def perguntar_ia():
     if not user_message:
         return jsonify({"erro": "A mensagem não pode estar vazia"}), 400
         
-    resposta = AIService.generate_financial_advice(current_user.id, user_message)
+    contexto_perfil = (
+        f"[PERFIL SOCIOECONÓMICO DO UTILIZADOR]\n"
+        f"Nome: {current_user.nome}\n"
+        f"Província: {current_user.provincia or 'Não informada'}\n"
+        f"Município: {current_user.municipio or 'Não informado'}\n"
+        f"Estado Civil: {current_user.estado_civil or 'Não informado'}\n"
+        f"Agregado Familiar: {current_user.agregado_familiar or 'Não informado'} pessoa(s)\n"
+        f"Ocupação/Segmento: {current_user.ocupacao or 'Não informada'}\n"
+        f"Objetivo Financeiro Primário: {current_user.objetivo_financeiro or 'Não informado'}\n"
+    )
+    
+    mensagem_enriquecida = f"{contexto_perfil}\n[PERGUNTA DO UTILIZADOR]\n{user_message}"
+    
+    resposta = AIService.generate_financial_advice(current_user.id, mensagem_enriquecida)
     
     FinancialRepository.save_ia_interaction(current_user.id, user_message, resposta)
     
