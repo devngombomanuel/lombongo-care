@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<style>
+    .avatar-perfil {
+        width: 130px;
+        height: 130px;
+        object-fit: cover;
+        border: 4px solid #FFCC00;
+    }
+    .border-custom {
+        border-radius: 12px !important;
+    }
+    .bg-primary-yellow {
+        background-color: #FFCC00 !important;
+        color: #212529 !important;
+    }
+    .btn-primary-yellow {
+        background-color: #FFCC00;
+        color: #212529;
+        font-weight: 600;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+    }
+    .btn-primary-yellow:hover {
+        background-color: #e6b800;
+        color: #212529;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+    <div class="row g-4">
+        <!-- Coluna da Esquerda: Card de Visualização rápida -->
+        <div class="col-12 col-md-4">
+            <div class="card p-4 text-center border-custom shadow-sm h-100 bg-white">
+                <div class="position-relative d-inline-block mx-auto mb-3">
+                    {% if current_user.foto_perfil %}
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.foto_perfil) }}" class="rounded-circle avatar-perfil" alt="Foto de Perfil">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/default-avatar.png') }}" class="rounded-circle avatar-perfil" alt="Foto Padrão">
+                    {% endif %}
+                </div>
+                
+                <h4 class="fw-bold mb-1">{{ current_user.nome }}</h4>
+                <p class="text-muted small mb-3 text-uppercase fw-semibold text-warning">
+                    {{ current_user.ocupacao|default('Não Informado', true) }}
+                </p>
+                
+                <hr class="my-3 text-muted">
+                
+                <!-- Estatísticas Rápidas adaptadas para Finanças -->
+                <div class="row text-center mt-2">
+                    <div class="col-6 border-end">
+                        <div class="fs-5 fw-bold text-dark">{{ data.total_receitas|default('0.00') }} Kz</div>
+                        <div class="text-muted small">Total Receitas</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fs-5 fw-bold text-muted">{{ current_user.provincia|default('-', true) }}</div>
+                        <div class="text-muted small">Localização</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna da Direita: Formulário de Edição -->
+        <div class="col-12 col-md-8">
+            <div class="card p-4 border-custom shadow-sm bg-white">
+                <h5 class="fw-bold mb-4 text-dark text-uppercase small tracking-wider">
+                    <i class="bi bi-person-gear me-2 text-warning"></i>Editar Informações da Conta
+                </h5>
+                
+                <form action="{{ url_for('dashboard.atualizar_perfil') }}" method="POST" enctype="multipart/form-data">
+                    <div class="row g-3">
+                        <!-- Nome Completo -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">Nome Completo</label>
+                            <input type="text" name="nome" class="form-control border-custom" value="{{ current_user.nome }}" required>
+                        </div>
+                        
+                        <!-- E-mail (Desabilitado) -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">E-mail (Não alterável)</label>
+                            <input type="email" class="form-control border-custom bg-light" value="{{ current_user.email }}" disabled>
+                        </div>
+
+                        <!-- Província -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">Província</label>
+                            <select name="provincia" class="form-select border-custom">
+                                <option value="" {% if not current_user.provincia %}selected{% endif %}>Selecione...</option>
+                                {% for prov in ['Bengo', 'Benguela', 'Bié', 'Cabinda', 'Cuando Cubango', 'Cuanza Norte', 'Cuanza Sul', 'Cunene', 'Huambo', 'Huíla', 'Luanda', 'Lunda Norte', 'Lunda Sul', 'Malanje', 'Moxico', 'Namibe', 'Uíge', 'Zaire'] %}
+                                    <option value="{{ prov }}" {% if current_user.provincia == prov %}selected{% endif %}>{{ prov }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Município -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">Município</label>
+                            <input type="text" name="municipio" class="form-control border-custom" value="{{ current_user.municipio|default('', true) }}" placeholder="Ex: Belas, Viana, Cazenga...">
+                        </div>
+
+                        <!-- Estado Civil -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">Estado Civil</label>
+                            <select name="estado_civil" class="form-select border-custom">
+                                <option value="" {% if not current_user.estado_civil %}selected{% endif %}>Selecione...</option>
+                                <option value="Solteiro(a)" {% if current_user.estado_civil == 'Solteiro(a)' %}selected{% endif %}>Solteiro(a)</option>
+                                <option value="Casado(a)" {% if current_user.estado_civil == 'Casado(a)' %}selected{% endif %}>Casado(a)</option>
+                                <option value="Divorciado(a)" {% if current_user.estado_civil == 'Divorciado(a)' %}selected{% endif %}>Divorciado(a)</option>
+                                <option value="Viúvo(a)" {% if current_user.estado_civil == 'Viúvo(a)' %}selected{% endif %}>Viúvo(a)</option>
+                            </select>
+                        </div>
+
+                        <!-- Agregado Familiar -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">Agregado Familiar (Opcional)</label>
+                            <input type="number" name="agregado_familiar" class="form-control border-custom" value="{{ current_user.agregado_familiar|default('', true) }}" min="1" placeholder="Nº de pessoas que vivem consigo">
+                        </div>
+
+                        <!-- Situação Profissional / Ocupação -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">Situação Profissional</label>
+                            <select name="ocupacao" class="form-select border-custom" required>
+                                <option value="" {% if not current_user.ocupacao %}selected{% endif %}>Selecione...</option>
+                                <option value="Trabalhador por conta própria" {% if current_user.ocupacao == 'Trabalhador por conta própria' %}selected{% endif %}>Trabalhador por conta própria</option>
+                                <option value="Empregado-Trabalhador" {% if current_user.ocupacao == 'Empregado-Trabalhador' %}selected{% endif %}>Empregado-Trabalhador</option>
+                                <option value="Empreendedor" {% if current_user.ocupacao == 'Empreendedor' %}selected{% endif %}>Empreendedor / Empresário</option>
+                                <option value="Estudante" {% if current_user.ocupacao == 'Estudante' %}selected{% endif %}>Estudante</option>
+                            </select>
+                        </div>
+
+                        <!-- Campo extra inteligente: Objetivo Financeiro Principal -->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label small fw-bold text-muted">Objetivo Financeiro Principal</label>
+                            <select name="objetivo_financeiro" class="form-select border-custom">
+                                <option value="Criar Reserva de Emergência" {% if current_user.objetivo_financeiro == 'Criar Reserva de Emergência' %}selected{% endif %}>Criar Reserva de Emergência</option>
+                                <option value="Comprar Casa/Terreno" {% if current_user.objetivo_financeiro == 'Comprar Casa/Terreno' %}selected{% endif %}>Comprar Casa / Terreno</option>
+                                <option value="Investir num Negócio Próprio" {% if current_user.objetivo_financeiro == 'Investir num Negócio Próprio' %}selected{% endif %}>Investir num Negócio Próprio</option>
+                                <option value="Pagar Dívidas" {% if current_user.objetivo_financeiro == 'Pagar Dívidas' %}selected{% endif %}>Pagar Dívidas</option>
+                                <option value="Apenas Controlar Gastos" {% if current_user.objetivo_financeiro == 'Apenas Controlar Gastos' %}selected{% endif %}>Apenas Controlar Gastos</option>
+                            </select>
+                        </div>
+
+                        <!-- Alterar Foto de Perfil -->
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-muted">Alterar Foto de Perfil</label>
+                            <input type="file" name="foto_perfil" class="form-control border-custom" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex justify-content-between align-items-center">
+                        <span class="text-muted small">
+                            <i class="bi bi-info-circle me-1"></i> A palavra-passe pode ser redefinida na tela de login.
+                        </span>
+                        <button type="submit" class="btn btn-primary-yellow px-4">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
