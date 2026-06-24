@@ -117,7 +117,7 @@
                             <select name="ocupacao" class="form-select border-custom" required>
                                 <option value="" {% if not current_user.ocupacao %}selected{% endif %}>Selecione...</option>
                                 <option value="Trabalhador por conta própria" {% if current_user.ocupacao == 'Trabalhador por conta própria' %}selected{% endif %}>Trabalhador por conta própria</option>
-                                <option value="Empregado-Trabalhador" {% if current_user.ocupacao == 'Empregado-Trabalhador' %}selected{% endif %}>Empregado-Trabalhador</option>
+                                <option value="Trabalhador" {% if current_user.ocupacao == 'Empregado-Trabalhador' %}selected{% endif %}>Trabalhador</option>
                                 <option value="Empreendedor" {% if current_user.ocupacao == 'Empreendedor' %}selected{% endif %}>Empreendedor / Empresário</option>
                                 <option value="Estudante" {% if current_user.ocupacao == 'Estudante' %}selected{% endif %}>Estudante</option>
                             </select>
