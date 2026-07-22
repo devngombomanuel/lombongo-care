@@ -37,7 +37,7 @@
   }
 </style>
 {% endblock %} {% block content %}
-<!-- Botão posicionado acima de tudo (Desktop e Mobile) -->
+
 <div class="row mb-3">
   <div class="col-12">
     <a
@@ -149,7 +149,7 @@
         </div>
       </div>
 
-      <!-- Estrutura de Tabela com Distribuição Blindada contra Quebras -->
+
       <div class="d-none d-md-block" style="width: 100%">
         <table class="table table-hover align-middle mb-0 tabela-ajustada">
           <thead>
@@ -157,7 +157,6 @@
               <th style="width: 13%">Data</th>
               <th style="width: 25%">Descrição</th>
               <th style="width: 16%">Categoria</th>
-              <!-- Forçado text-nowrap e aumentado para 18% para o título nunca quebrar -->
               <th class="text-nowrap" style="width: 18%">Periodicidade</th>
               <th style="width: 18%">Valor</th>
               <th class="text-end" style="width: 10%">Ações</th>
@@ -279,7 +278,7 @@
         </table>
       </div>
 
-      <!-- Visualização Mobile Alternativa -->
+
       <div class="d-block d-md-none" id="extrato-mobile">
         {% for r in data.receitas %}
         <div
