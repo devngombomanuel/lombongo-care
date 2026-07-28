@@ -73,6 +73,14 @@ Integração com API de inteligência artificial para:
 
 ---
 
+### Perfil de Utilizador
+
+- Dados pessoais do utilizador
+- Dados profissionais e académicos do utilizador
+- Foto de perfil
+
+---
+
 ## Stack Tecnológica
 
 ### Backend
