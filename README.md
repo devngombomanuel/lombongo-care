@@ -82,6 +82,10 @@ Integração com API de inteligência artificial para:
 - Flask-SQLAlchemy
 - Flask-Migrate
 - Flask-Login ou Flask-JWT-Extended
+
+---
+
+### Database
 - SQLite (MVP)
 
 ---
