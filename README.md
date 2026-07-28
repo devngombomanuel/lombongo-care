@@ -79,9 +79,6 @@ Integração com API de inteligência artificial para:
 
 - Python 3.11+
 - Flask
-- Flask-SQLAlchemy
-- Flask-Migrate
-- Flask-Login ou Flask-JWT-Extended
 
 ---
 
