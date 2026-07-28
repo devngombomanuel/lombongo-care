@@ -103,7 +103,7 @@ Integração com API de inteligência artificial para:
 
 ### Inteligência Artificial
 
-- API de LLM (OpenAI, Gemini ou equivalente)
+- API de LLM (Gemini)
 
 ---
 
