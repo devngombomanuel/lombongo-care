@@ -39,7 +39,7 @@ O objetivo do LombongoCare é permitir que qualquer utilizador:
 - Adicionar receitas
 - Adicionar despesas
 - Categorizar despesas
-- Definir periodicidade (diária, semanal, mensal)
+- Definir periodicidade (diária, semanal, mensal, anual)
 
 ---
 
