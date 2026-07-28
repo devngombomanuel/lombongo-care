@@ -70,6 +70,7 @@ Integração com API de inteligência artificial para:
 - Criar planos de poupança
 - Alertar sobre gastos excessivos
 - Gerar recomendações personalizadas
+- Feedbacks com base no perfil do utilizador
 
 ---
 
